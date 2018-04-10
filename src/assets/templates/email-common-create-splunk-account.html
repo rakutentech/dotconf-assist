@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+</head>
+    <body style="background-color: #f6f6f6">
+        <div style="background-color: #ffffff; margin: 10px; padding: 1px 15px">
+                <p>Hello <span style="font-weight:bold;">{{.Who}}</span>,</p>
+                <p>The Following account is created on Splunk Web</p>
+                <ul>
+                    <li>User Name: {{.Data.UserName}}</li>
+                    <li>Environment: {{.Data.Env}}</li>
+                    <li>Splunk Host: {{.Data.SearchHead}}</li>
+                    <li>Position IDs: {{.Data.PositionIDs}}</li>
+                    <li>RPaaS User Name: {{.Data.RpaasUserName}}</li>
+                    <li>Note: {{.Data.Memo}}</li>
+                </ul>
+                <p>You can access the account information from <a href="{{.Link}}">HERE</a></p>
+        </div>
+        <div style="margin-top: 10px; font-size: 12px; text-align: center; color: #999999">
+            <span >Splunk as a Service | Data Store Platform Group</span>
+            <br>
+            <span><a href="mailto:{{.AdminEmail}}" style="text-decoration: underline; color: #3498db;">{{.AdminEmail}}</a></span>
+            <br>
+            <span>HipChat: Splunk as a Service</span>
+        </div>
+    </body>
+</html>

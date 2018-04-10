@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+</head>
+    <body style="background-color: #f6f6f6">
+        <div style="background-color: #ffffff; margin: 10px; padding: 1px 15px">
+                <p>Hello <span style="font-weight:bold;">{{.Who}}</span>,</p>
+                <p><span style="font-weight:bold;">{{.AdditionalData.User}} </span>has requested to deploy an app with the following details.</p>
+                {{if .AdditionalData.Success}}
+                <p style="color:green;">{{.AdditionalData.Success}}</p>
+                {{end}}
+                {{if .AdditionalData.Error}}
+                <p style="color:red;">{{.AdditionalData.Error}}</p>
+                {{end}}
+                {{if .AdditionalData.Link4Tag}}
+                <span>You can change the permission from <a href="{{.AdditionalData.Link4Tag}}">{{.AdditionalData.Link4Tag}}</a></span>
+                {{end}}
+                <p style="font-weight:bold;">Env: <span style="font-weight:normal;">{{.AdditionalData.Env}}</span></p>
+                <p style="font-weight:bold;">App: <span style="font-weight:normal;">{{.AdditionalData.App}}</span></p>
+                <p style="font-weight:bold;">Server Class(es):</p>
+                <ul>
+                    {{range $i, $v := .Data}}
+                    <li>{{$v.ServerClassName}}
+                        <ul>
+                            {{range $j, $fwdr := $v.ForwarderNames}}
+                            <li>{{$fwdr.Name}}</li>
+                            {{end}}
+                        </ul>
+                    </li>
+                    {{end}}
+                </ul>
+                <p>You can access the deployment information from <a href="{{.Link}}">HERE</a></p>
+        </div>
+        <div style="margin-top: 10px; font-size: 12px; text-align: center; color: #999999">
+            <span >Splunk as a Service | Data Store Platform Group</span>
+            <br>
+            <span><a href="mailto:{{.AdminEmail}}" style="text-decoration: underline; color: #3498db;">{{.AdminEmail}}</a></span>
+            <br>
+            <span>HipChat: Splunk as a Service</span>
+        </div>
+    </body>
+</html>

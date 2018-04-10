@@ -1,0 +1,670 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="folder open outline icon"></i>Apps</h1>
+  <div [style.visibility]= "loadError || user=='admin' ? 'hidden' : 'visible'" (click)="openAddModal()" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add app
+  </div>
+
+  <!-- <div *ngIf="!isCompleted" class="ui active left inline loader"></div> -->
+  <div *ngIf="!(inputsLoaded[0]&&inputsLoaded[1]&&inputsLoaded[2]&&isCompleted)" class="ui active left inline loader"></div>
+
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message class="positive modal-msg">
+  <message-content>
+    <sm-list class="bulleted">
+      <sm-item>An app is a collection of inputs. An input is the configuration of a source which generates the logs. <a class="link" (click)="infoModal.show({blurring: true})">Example</a></sm-item>
+      <sm-item>You will need to click "Apply" again in "Deployment" to reflect your changes once you changed any thing (App, Input, ServerClass) related to that App</sm-item>
+    </sm-list>
+  </message-content>
+</sm-message>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th class="width30">
+        <div *ngIf="activeAttr=='name'" (click)="sortTable('name')" class="ui button active-attr">
+          App Name <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='name'" (click)="sortTable('name')" class="ui button attr">
+          App Name <i class="sort icon"></i>
+        </div>
+      </th>
+
+      <th *ngIf="user=='admin'">
+        <div *ngIf="activeAttr=='user_name'" (click)="sortTable('user_name')" class="ui button active-attr">
+          User <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='user_name'" (click)="sortTable('user_name')" class="ui button attr">
+          User <i class="sort icon"></i>
+        </div>
+      </th>
+
+      <th class="width40">Inputs</th>
+      <th class="width20">
+        <div *ngIf="activeAttr=='created_at'" (click)="sortTable('created_at')" class="ui button active-attr">
+          Created At <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='created_at'" (click)="sortTable('created_at')" class="ui button attr">
+          Created At <i class="sort icon"></i>
+        </div>
+      </th>
+      <th class="width10">Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let app of apps | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+
+      <td *ngIf="app.deploy_status==1 || app.deploy_status==2">{{app.name}}</td>
+      <td *ngIf="app.deploy_status==3 || app.deploy_status==-1" id="td{{i}}-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 0)'>
+        <span *ngIf="!eleActive[i][0]" class="ie-text">{{app.name}}</span>
+        <button *ngIf="eleHovered[i][0]" (click)="onEdit(i, 0, app)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" [(ngModel)]="currentApp.name" formControlName="name">
+            <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+
+            <a class="ui button ie-confirm" [class.disabled]='!nameCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td *ngIf="user=='admin'">{{app.user_name}}</td>
+
+      <td id="td{{i}}-1" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 1)'>
+        <button *ngIf="eleHovered[i][1]" (click)="openEditModal(app)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <button *ngIf="eleHovered[i][1]" (click)="showModal.show({blurring: true});openShowModal(app)" class="ui button ie-tip"><i class="list layout outline icon ie-icon"></i></button>
+
+        <sm-accordion>
+          <sm-accordion-item *ngIf="!app.unix_app && app.file_inputs?.length>0">
+            <accordion-title>{{app.file_inputs?.length}} Log File Inputs
+            </accordion-title>
+            <accordion-content>
+              <sm-list class="bulleted">
+                <sm-item *ngFor="let input of app.file_inputs">{{input.log_file_path}}</sm-item>
+              </sm-list>
+            </accordion-content>
+          </sm-accordion-item>
+          <sm-accordion-item *ngIf="!app.unix_app && app.script_inputs?.length>0">
+            <accordion-title>{{app.script_inputs?.length}} Script Inputs
+            </accordion-title>
+            <accordion-content>
+              <sm-list class="bulleted">
+                <sm-item *ngFor="let input of app.script_inputs">{{input.script_name}}</sm-item>
+              </sm-list>
+            </accordion-content>
+          </sm-accordion-item>
+          <sm-accordion-item *ngIf="app.unix_app && app.unix_app_inputs?.length>0">
+            <accordion-title>{{app.unix_app_inputs?.length}} Unix App Inputs
+            </accordion-title>
+            <accordion-content>
+              <sm-list class="bulleted">
+                <sm-item *ngFor="let input of app.unix_app_inputs">{{input.script_name}}</sm-item>
+              </sm-list>
+            </accordion-content>
+          </sm-accordion-item>
+        </sm-accordion>
+      </td>
+      <td>{{app.created_at}}</td>
+      <td *ngIf="app.deploy_status==1 || app.deploy_status==2">Please deinstall app first</td>
+      <td *ngIf="app.deploy_status==3 || app.deploy_status==-1">
+        <div (click)="delModal.show({blurring: true});openDelModal(app)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<div class="ui modal large" id="addAppModal">
+  <div class="ui icon header">
+    <i class="plus icon"></i>
+    Add App
+  </div>
+
+  <div class="content">
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <div class="ui form">
+      <div class="inline fields">
+        <label>App type</label>
+        <div class="field">
+          <div class="ui radio checkbox">
+            <input type="radio" [checked]="appType=='app'" (change)="onChangeAppType('app')">
+            <label>App</label>
+          </div>
+        </div>
+        <div class="field">
+          <div class="ui radio checkbox">
+            <input type="radio" [checked]="appType=='unixapp'" (change)="onChangeAppType('unixapp')">
+            <label>Unix App</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- <sm-list class="bulleted">
+      <sm-item *ngFor="let id of selectedFileInputIDs">{{id}}</sm-item>
+    </sm-list>
+    <sm-list class="bulleted">
+      <sm-item *ngFor="let id of selectedScriptInputIDs">{{id}}</sm-item>
+    </sm-list>
+    <sm-list class="bulleted">
+      <sm-item *ngFor="let id of selectedUnixAppInputIDs">{{id}}</sm-item>
+    </sm-list> -->
+
+    <sm-message *ngIf="appType=='unixapp'" class="positive modal-msg">
+      <message-content>
+        See dashboard example of Unix App from <a class="link" target="_blank" href="{{unixappDashboardLink}}">here</a>
+      </message-content>
+    </sm-message>
+    
+    <form class="ui form" [formGroup]="form">
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label">App name</div>
+          <input type="text" placeholder="Name" [(ngModel)]="currentApp.name" formControlName="name">
+        </div>
+        <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+          {{requiredMsg}}
+        </small>
+      </div>
+    </form>
+
+    <div class="text-right">
+      <div class="ui labeled input">
+        <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+        <div class="ui icon input right">
+          <input type="text" placeholder="Search..." [(ngModel)]="queryInputStr">
+          <i class="search icon"></i>
+        </div>
+      </div>
+      <sm-button class="ui cancel" (click)="hideModal('addAppModal')">Cancel</sm-button>
+      <a *ngIf="appType=='app'" class="ui teal ok button" [class.disabled]='(selectedFileInputIDs?.length<1 && selectedScriptInputIDs?.length<1) || !nameCtl.valid || !isCompleted' (click)="hideModal('addAppModal'); addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+      <a *ngIf="appType=='unixapp'" class="ui teal ok button" [class.disabled]='selectedUnixAppInputIDs?.length<1 || !nameCtl.valid || !isCompleted' (click)="hideModal('addAppModal'); addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    </div>
+  </div>
+
+  <div class="scrolling content">
+    <h4 *ngIf="appType!='unixapp'">Log file inputs</h4>
+    <table class="ui selectable celled table" *ngIf="appType=='app'">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>Log file path</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>Blacklist</th>
+          <th>crcSalt</th>
+          <th>Memo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of fileInputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" (change)="onChangeInput('file', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.log_file_path}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.blacklist}}</td>
+          <td>{{input.crcsalt}}</td>
+          <td>{{input.memo}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="appType!='unixapp'">Script inputs</h4>
+    <table class="ui selectable celled table" *ngIf="appType=='app'">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>Script name</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>OS</th>
+          <th>Interval</th>
+          <th>Option</th>
+          <th>Exefile</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of scriptInputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" (change)="onChangeInput('script', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.os}}</td>
+          <td>{{input.interval}}</td>
+          <td>{{input.option}}</td>
+          <td>{{input.exefile}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="appType=='unixapp'">Unix app inputs</h4>
+    <table class="ui selectable celled table" *ngIf="appType=='unixapp'">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>Script name</th>
+          <th>Retention</th>
+          <th>Interval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of unixAppInputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" (change)="onChangeInput('unixapp', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.interval}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <sm-button class="ui cancel">Cancel</sm-button>
+    <a *ngIf="appType=='app'" class="ui teal ok button" [class.disabled]='(selectedFileInputIDs?.length<1 && selectedScriptInputIDs?.length<1) || !nameCtl.valid || !isCompleted' (click)="hideModal('addAppModal'); addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    <a *ngIf="appType=='unixapp'" class="ui teal ok button" [class.disabled]='selectedUnixAppInputIDs?.length<1 || !nameCtl.valid || !isCompleted' (click)="hideModal('addAppModal'); addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </div>
+</div>
+
+<div class="ui modal large" id="editAppModal">
+  <div class="ui icon header">
+    <i class="edit icon"></i>
+    Edit App
+  </div>
+
+  <div class="content">
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <!-- <sm-list class="bulleted">
+      <sm-item *ngFor="let id of selectedFileInputIDs">{{id}}</sm-item>
+    </sm-list>
+    <sm-list class="bulleted">
+      <sm-item *ngFor="let id of selectedScriptInputIDs">{{id}}</sm-item>
+    </sm-list>
+    <sm-list class="bulleted">
+      <sm-item *ngFor="let id of selectedUnixAppInputIDs">{{id}}</sm-item>
+    </sm-list> -->
+
+    <div class="field">
+      <div class="ui labeled input width100">
+        <div class="ui label input-label">App name</div>
+        <input class="text-readonly" type="text" [(ngModel)]="currentApp.name" disabled>
+      </div>
+    </div>
+
+    <div class="text-right">
+      <div class="ui labeled input">
+        <div class="ui icon input right">
+          <input type="text" placeholder="Search..." [(ngModel)]="queryInputStr">
+          <i class="search icon"></i>
+        </div>
+      </div>
+      <sm-button class="ui cancel" (click)="hideModal('editAppModal')">Cancel</sm-button>
+      <a *ngIf="!currentApp.unix_app" class="ui teal ok button" [class.disabled]='(selectedFileInputIDs?.length<1 && selectedScriptInputIDs?.length<1) || !isCompleted' (click)="hideModal('editAppModal'); editRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+      <a *ngIf="currentApp.unix_app" class="ui teal ok button" [class.disabled]='selectedUnixAppInputIDs?.length<1 || !isCompleted' (click)="hideModal('editAppModal');editRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    </div>
+  </div>
+
+  <div class="scrolling content">
+    <h4 *ngIf="!currentApp.unix_app">Log file inputs</h4>
+    <table class="ui selectable celled table" *ngIf="!currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>Log file path</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>Blacklist</th>
+          <th>crcSalt</th>
+          <th>Memo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.file_inputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="fileInputChecked[i]" (change)="fileInputChecked[i] = !fileInputChecked[i]; onChangeInput('file', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.log_file_path}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.blacklist}}</td>
+          <td>{{input.crcsalt}}</td>
+          <td>{{input.memo}}</td>
+        </tr>
+        <tr *ngFor="let input of fileInputs | search : queryInputStr; let i=index ">
+          <td>{{currentApp.file_inputs?.length + i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="fileInputChecked[currentApp.file_inputs?.length+i]" (change)="fileInputChecked[currentApp.file_inputs?.length+i] = !fileInputChecked[currentApp.file_inputs?.length+i]; onChangeInput('file', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.log_file_path}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.blacklist}}</td>
+          <td>{{input.crcsalt}}</td>
+          <td>{{input.memo}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="!currentApp.unix_app">Script inputs</h4>
+    <table class="ui selectable celled table" *ngIf="!currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>Script name</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>OS</th>
+          <th>Interval</th>
+          <th>Option</th>
+          <th>Exefile</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.script_inputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="scriptInputChecked[i]" (change)="scriptInputChecked[i] = !scriptInputChecked[i]; onChangeInput('script', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.os}}</td>
+          <td>{{input.interval}}</td>
+          <td>{{input.option}}</td>
+          <td>{{input.exefile}}</td>
+        </tr>
+        <tr *ngFor="let input of scriptInputs | search : queryInputStr; let i=index ">
+          <td>{{currentApp.script_inputs?.length + i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="scriptInputChecked[currentApp.script_inputs?.length+i]" (change)="scriptInputChecked[currentApp.script_inputs?.length+i] = !scriptInputChecked[currentApp.script_inputs?.length+i]; onChangeInput('script', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.os}}</td>
+          <td>{{input.interval}}</td>
+          <td>{{input.option}}</td>
+          <td>{{input.exefile}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="currentApp.unix_app">Unix app inputs</h4>
+    <table class="ui selectable celled table" *ngIf="currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>Script name</th>
+          <th>Retention</th>
+          <th>Interval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.unix_app_inputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="unixAppInputChecked[i]" (change)="unixAppInputChecked[i] = !unixAppInputChecked[i]; onChangeInput('unixapp', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.interval}}</td>
+        </tr>
+        <tr *ngFor="let input of unixAppInputs | search : queryInputStr; let i=index ">
+          <td>{{currentApp.unix_app_inputs?.length + i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="unixAppInputChecked[currentApp.unix_app_inputs?.length+i]" (change)="unixAppInputChecked[currentApp.unix_app_inputs?.length+i] = !unixAppInputChecked[currentApp.unix_app_inputs?.length+i]; onChangeInput('unixapp', input.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.interval}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <sm-button class="ui cancel">Cancel</sm-button>
+    <a *ngIf="!currentApp.unix_app" class="ui teal ok button" [class.disabled]='(selectedFileInputIDs?.length<1 && selectedScriptInputIDs?.length<1) || !isCompleted' (click)="hideModal('editAppModal');editRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    <a *ngIf="currentApp.unix_app" class="ui teal ok button" [class.disabled]='selectedUnixAppInputIDs?.length<1 || !isCompleted' (click)="hideModal('editAppModal');editRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </div>
+</div>
+
+<sm-modal title="Inputs in App ({{currentApp.name}})" class="ui large modal" icon="list layout" #showModal>
+  <modal-content>
+    <h4 *ngIf="!currentApp.unix_app">Log file inputs</h4>
+    <table class="ui selectable celled table" *ngIf="!currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Log file path</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>Blacklist</th>
+          <th>crcSalt</th>
+          <th>Memo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.file_inputs | search : queryStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>{{input.log_file_path}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.blacklist}}</td>
+          <td>{{input.crcsalt}}</td>
+          <td>{{input.memo}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="!currentApp.unix_app">Script inputs</h4>
+    <table class="ui selectable celled table" *ngIf="!currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Script name</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>OS</th>
+          <th>Interval</th>
+          <th>Option</th>
+          <th>Exefile</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.script_inputs | search : queryStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.os}}</td>
+          <td>{{input.interval}}</td>
+          <td>{{input.option}}</td>
+          <td>{{input.exefile}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="currentApp.unix_app">Unix app inputs</h4>
+    <table class="ui selectable celled table" *ngIf="currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Script name</th>
+          <th>Retention</th>
+          <th>Interval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.unix_app_inputs | search : queryStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.interval}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="showModal.hide()">Close</sm-button>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Do you want to delete app?" class="ui modal" icon="trash" #delModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        <label>Name</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentApp.name" disabled>
+      </div>
+
+      <div class="field">
+        <label>Created At</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentApp.created_at" disabled>
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="delModal.hide()">Cancel</sm-button>
+    <div class="ui button orange del" (click)="delModal.hide();deleteRecord()">Delete</div>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Inputs and Apps" class="ui small modal" icon="info" #infoModal>
+  <modal-content>
+    <sm-message class="positive modal-msg">
+      <message-content>
+        <i class="info icon"></i>The App here is different from the App located at the top bar in Splunk Web, the latter one is the working environment for current user, basically you will never need to switch that App in Splunk Host
+      </message-content>
+    </sm-message>
+    <img src="assets/images/inputs-apps.png" class="ui image">
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="infoModal.hide()">Close</sm-button>
+  </modal-actions>
+</sm-modal>
+
+<button class="invisible" id="add-modal-close" (click)="hideModal('addAppModal')">Hide</button>

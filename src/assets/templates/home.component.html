@@ -1,0 +1,382 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="home icon"></i>Home</h1>
+  <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+  <div [style.visibility]="'hidden'" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> 
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<div class="ui grid">
+  <div class="eight wide column">
+    <h2 class="ui floated"><i class="mouse pointer icon"></i>Getting started</h2>
+    <div class="ui message positive">
+      <sm-list class="bulleted">
+        <sm-item>Step 0. Create splunk account</sm-item>
+        <sm-item>Step 1. Add forwarder => Add server class</sm-item>
+        <sm-item>Step 2. Add input => Add app</sm-item>
+        <sm-item>Step 3. Configure deployment => Apply</sm-item>
+        <sm-item>Step 4. Access Splunk host to enjoy Splunk</sm-item>
+      </sm-list>
+    </div>
+
+    <h2 *ngIf="userName!='admin' "class="ui floated"><i class="user circle icon"></i>Splunk account ({{env}})</h2>
+    <div *ngIf="splunkUser.user_name==null && userName!='admin'" class="ui message positive">
+      <sm-list class="bulleted">
+        <sm-item>Please refresh the page after creating Splunk account</sm-item>
+      </sm-list>
+    </div>
+    <!-- <div *ngIf="user.status=='Waiting'|| user.status=='Canceled'" class="ui message orange">
+      <p>Your {{appName}} account has not been approved yet, thus you cannot create Splunk account now</p>
+    </div> -->
+
+    <button *ngIf="splunkUser.user_name==null && userName!='admin'" class="ui button teal" (click)="addModal.show({blurring: true}); openAddModal()">
+      <i class="plus icon"></i>
+      Create splunk account
+    </button>
+
+    <div *ngIf="splunkUser.user_name!=null && userName!='admin'">
+      <table class="ui selectable celled table">
+        <tbody>
+          <tr >
+            <td class="tbl-colume width40">User name</td>
+            <td><span class="ie-text text-readonly">{{splunkUser.user_name}}</span>
+            </td>
+          </tr>
+
+          <tr >
+            <td class="tbl-colume width40">Splunk host</td>
+            <td>
+              <a href="https://{{splunkUser.search_head}}" target="_blank">https://{{splunkUser.search_head}}</a>
+            </td>
+          </tr>
+
+          <tr >
+            <td class="tbl-colume width40">Splunk host (Local Authentication)</td>
+            <td>
+              <a href="https://{{splunkUser.search_head}}/en-US/account/login?loginType=splunk" target="_blank">https://{{splunkUser.search_head}}/en-US/account/login?loginType=splunk</a>
+            </td>
+          </tr>
+
+          <tr >
+            <td class="tbl-colume width40">RPaaS user name</td>
+            <td id="td0-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 0)'>
+              <span *ngIf="!eleActive[0][0]" class="ie-text">{{splunkUser.rpaas_user_name}}</span>
+              <button *ngIf="eleHovered[0][0]" (click)="onEditSplunkUser(0,0,splunkUser)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+              <div *ngIf="eleActive[0][0]" class="ie-div">
+                <form class="ui form" [formGroup]="form">
+                  <input type="text" [(ngModel)]="currentSplunkUser.rpaas_user_name" formControlName="rpaasName">
+                  <small *ngIf="rpaasNameCtl.dirty && !rpaasNameCtl.valid" class="vali-msg">
+                    {{passwordMsg}}
+                  </small>
+                  <a class="ui button ie-cancel" (click)="cancelEdit()">
+                    <i class="remove icon ie-icon"></i>
+                  </a>
+                  <a class="ui button ie-confirm" [class.disabled]='!rpaasNameCtl.valid' (click)="editSplunkUserRecord()">
+                    <i class="checkmark icon ie-icon"></i>
+                  </a>
+                </form>
+              </div>
+            </td>
+          </tr>
+
+          <tr >
+            <td class="tbl-colume width40">Note</td>
+            <td id="td0-1" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 1)'>
+              <span *ngIf="!eleActive[0][1]" class="ie-text">{{splunkUser.memo}}</span>
+              <button *ngIf="eleHovered[0][1]" (click)="onEditSplunkUser(0, 1, splunkUser)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+              <div *ngIf="eleActive[0][1]" class="ie-div">
+                <form class="ui form" [formGroup]="form">
+                  <input type="text" [(ngModel)]="currentSplunkUser.memo" formControlName="memo">
+                  <small *ngIf="memoCtl.dirty && !memoCtl.valid" class="vali-msg">
+                    {{requiredMsg}}
+                  </small>
+                  <a class="ui button ie-cancel" (click)="cancelEdit()">
+                    <i class="remove icon ie-icon"></i>
+                  </a>
+                  <a class="ui button ie-confirm" [class.disabled]='!memoCtl.valid' (click)="editSplunkUserRecord()">
+                    <i class="checkmark icon ie-icon"></i>
+                  </a>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <tr >
+            <td class="tbl-colume width40">Position ID<a class="link" target="_blank" href="{{staffLink}}">?</a></td>
+            <td id="td0-2" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 2)'>
+              <span *ngIf="!eleActive[0][2]" class="ie-text">{{splunkUser.position_ids}}</span>
+              <button *ngIf="eleHovered[0][2]" (click)="onEditSplunkUser(0, 2, splunkUser)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+              <div *ngIf="eleActive[0][2]" class="ie-div">
+                <form class="ui form" [formGroup]="form">
+                  <input type="text" (click)="popupPosiID.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentSplunkUser.position_ids" formControlName="positionID">
+                  <small *ngIf="positionIDCtl.dirty && !positionIDCtl.valid" class="vali-msg">
+                    {{requiredMsg}}
+                  </small>
+                  <a class="ui button ie-cancel" (click)="cancelEdit()">
+                    <i class="remove icon ie-icon"></i>
+                  </a>
+                  <a class="ui button ie-confirm" [class.disabled]='!positionIDCtl.valid' (click)="editSplunkUserRecord()">
+                    <i class="checkmark icon ie-icon"></i>
+                  </a>
+                </form>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 *ngIf="user.user_name!=null" class="ui floated"><i class="user icon"></i>{{appName}} account (all env)</h2>
+    <table *ngIf="user.user_name!=null" class="ui selectable celled table">
+      <tbody>
+        <tr >
+          <td class="tbl-colume width40">User name</td>
+          <td><span class="ie-text text-readonly">{{user.user_name}}</span>
+          </td>
+        </tr>
+
+        <tr >
+          <td class="tbl-colume width40">Status</td>
+          <td *ngIf="user.status=='Approved'" class="positive" >{{user.status}}<i class="check circle icon green"></i></td>
+          <td *ngIf="user.status=='Canceled'" class="red" >{{user.status}}<i class="remove circle icon red"></i></td>
+          <td *ngIf="user.status=='Waiting'" class="blue" >{{user.status}}<i class="minus circle icon blue"></i></td>
+        </tr>
+
+        <tr >
+          <td class="tbl-colume width40">Password</td>
+          <td id="td0-3" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 3)'>
+            <span *ngIf="!eleActive[0][3]" class="ie-text">******</span>
+            <button *ngIf="eleHovered[0][3]" (click)="onEdit(0, 3, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+            <div *ngIf="eleActive[0][3]" class="ie-div">
+              <form class="ui form" [formGroup]="userForm">
+                <input type="password" [(ngModel)]="currentUser.password" formControlName="password">
+                <small *ngIf="passwordCtl.dirty && !passwordCtl.valid" class="vali-msg">
+                  {{passwordMsg}}
+                </small>
+                <a class="ui button ie-cancel" (click)="cancelEdit()">
+                  <i class="remove icon ie-icon"></i>
+                </a>
+                <a class="ui button ie-confirm" [class.disabled]='!passwordCtl.valid' (click)="editRecord('change_password')">
+                  <i class="checkmark icon ie-icon"></i>
+                </a>
+              </form>
+            </div>
+          </td>
+        </tr>
+
+        <tr >
+          <td class="tbl-colume width40">Group name</td>
+          <td id="td0-4" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 4)'>
+            <span *ngIf="!eleActive[0][4]" class="ie-text">{{user.group_name}}</span>
+            <button *ngIf="eleHovered[0][4]" (click)="onEdit(0, 4, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+            <div *ngIf="eleActive[0][4]" class="ie-div">
+              <form class="ui form" [formGroup]="userForm">
+                <input type="text" [(ngModel)]="currentUser.group_name" formControlName="groupName">
+                <small *ngIf="groupCtl.dirty && !groupCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+                <a class="ui button ie-cancel" (click)="cancelEdit()">
+                  <i class="remove icon ie-icon"></i>
+                </a>
+                <a class="ui button ie-confirm" [class.disabled]='!groupCtl.valid' (click)="editRecord()">
+                  <i class="checkmark icon ie-icon"></i>
+                </a>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <tr >
+          <td class="tbl-colume width40">App team name<a class="link" target="_blank" href="{{appTeamLink}}">?</a></td>
+          <td id="td0-5" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 5)'>
+            <span *ngIf="!eleActive[0][5]" class="ie-text">{{user.app_team_name}}</span>
+            <button *ngIf="eleHovered[0][5]" (click)="onEdit(0, 5, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+            <div *ngIf="eleActive[0][5]" class="ie-div">
+              <form class="ui form" [formGroup]="userForm">
+                <input type="text" [(ngModel)]="currentUser.app_team_name" formControlName="appTeamName">
+                <small *ngIf="appTeamCtl.dirty && !appTeamCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+                <a class="ui button ie-cancel" (click)="cancelEdit()">
+                  <i class="remove icon ie-icon"></i>
+                </a>
+                <a class="ui button ie-confirm" [class.disabled]='!appTeamCtl.valid' (click)="editRecord()">
+                  <i class="checkmark icon ie-icon"></i>
+                </a>
+              </form>
+            </div>
+          </td>
+        </tr>
+
+        <tr >
+          <td class="tbl-colume width40">Service ID<a class="link" target="_blank" href="{{serviceIDLink}}">?</a></td>
+          <td id="td0-6" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 6)'>
+            <span *ngIf="!eleActive[0][6]" class="ie-text">{{user.service_id}}</span>
+            <button *ngIf="eleHovered[0][6]" (click)="onEdit(0, 6, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+            <div *ngIf="eleActive[0][6]" class="ie-div">
+              <form class="ui form" [formGroup]="userForm">
+                <input type="text" [(ngModel)]="currentUser.service_id" formControlName="serviceID">
+                <small *ngIf="serviceIDCtl.dirty && !serviceIDCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+                <a class="ui button ie-cancel" (click)="cancelEdit()">
+                  <i class="remove icon ie-icon"></i>
+                </a>
+                <a class="ui button ie-confirm" [class.disabled]='!serviceIDCtl.valid' (click)="editRecord()">
+                  <i class="checkmark icon ie-icon"></i>
+                </a>
+              </form>
+            </div>
+          </td>
+        </tr>
+
+        <tr >
+          <td class="tbl-colume width40">Email for information</td>
+          <td id="td0-7" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 7)'>
+            <span *ngIf="!eleActive[0][7]" class="ie-text">{{user.email}}</span>
+            <button *ngIf="eleHovered[0][7]" (click)="onEdit(0, 7, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+            <div *ngIf="eleActive[0][7]" class="ie-div">
+              <form class="ui form" [formGroup]="userForm">
+                <input type="text" [(ngModel)]="currentUser.email" formControlName="email">
+                <small *ngIf="emailCtl.dirty && !emailCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+                <a class="ui button ie-cancel" (click)="cancelEdit()">
+                  <i class="remove icon ie-icon"></i>
+                </a>
+                <a class="ui button ie-confirm" [class.disabled]='!emailCtl.valid' (click)="editRecord()">
+                  <i class="checkmark icon ie-icon"></i>
+                </a>
+              </form>
+            </div>
+          </td>
+        </tr>
+
+        <tr >
+          <td class="tbl-colume width40">Email for emergency</td>
+          <td id="td0-8" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(0, 8)'>
+            <span *ngIf="!eleActive[0][8]" class="ie-text">{{user.email_for_emergency}}</span>
+            <button *ngIf="eleHovered[0][8]" (click)="onEdit(0, 8, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+            <div *ngIf="eleActive[0][8]" class="ie-div">
+              <form class="ui form" [formGroup]="userForm">
+                <input type="text" [(ngModel)]="currentUser.email_for_emergency" formControlName="emailForEmg">
+                <small *ngIf="emailForEmgCtl.dirty && !emailForEmgCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+                <a class="ui button ie-cancel" (click)="cancelEdit()">
+                  <i class="remove icon ie-icon"></i>
+                </a>
+                <a class="ui button ie-confirm" [class.disabled]='!emailForEmgCtl.valid' (click)="editRecord()">
+                  <i class="checkmark icon ie-icon"></i>
+                </a>
+              </form>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div> <!-- end of first grid-->
+
+  <div class="eight wide column">
+    <h2 class="ui floated"><i class="announcement icon"></i>Announcements</h2>
+    <div class="ui message div-announcement">
+      <sm-list class="bulleted">
+        <sm-item *ngFor="let announcement of announcements"><span class="text-teal">{{announcement.created_at}} </span> {{announcement.content}}</sm-item>
+      </sm-list>
+    </div>
+
+    <!-- <h2 class="ui floated"><i class="file text icon"></i>API Token</h2>
+    <div class="ui message">
+      <pre *ngIf="jwt" class="word-wrap">{{ jwt }}</pre>
+      <pre *ngIf="jwt"><code>{{ decodedJwt | json }}</code></pre>
+    </div> -->
+  </div>
+</div>
+
+<sm-modal [hidden]="splunkUser.user_name==null" title="Create splunk user" class="ui small modal" icon="plus" #addModal>
+  <modal-content>
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <form class="ui form" [formGroup]="form">
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label"><span class="must-mark">*</span>User name</div>
+          <input class="text-readonly" type="text" [(ngModel)]="currentSplunkUser.user_name" formControlName="name">
+        </div>
+      </div>
+
+      <div class="field">
+        <!-- <p *ngIf="env=='prod'">You can only use the default Splunk host unless you have talked with Splunk team</p> -->
+        <div class="ui labeled input">
+          <div class="ui label input-label"><span class="must-mark">*</span>Splunk host</div>
+          <sm-select [(model)]="currentSplunkUser.search_head" class="fluid">
+            <option *ngFor="let splunkHost of splunkHosts">{{splunkHost.name}}</option>
+          </sm-select>
+        </div>
+      </div>
+      
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label"><span class="must-mark">*</span>Password for Splunk</div>
+          <input type="password" placeholder="Password" [(ngModel)]="currentSplunkUser.password" formControlName="password">
+        </div>
+        <small *ngIf="splunkPasswordCtl.dirty && !splunkPasswordCtl.valid" class="vali-msg">
+          {{passwordMsg}}
+        </small>
+      </div>
+
+      <div class="field">
+        <p>The Single Sign-On can only be enabled on the common Splunk seach head and some dedicated search head</p>
+        <div class="ui labeled input">
+          <div class="ui label input-label"><span class="must-mark">*</span>Position ID <a class="link" target="_blank" href="{{staffLink}}">?</a></div>
+          <input type="type" placeholder="Possition ID" (click)="popupPosiID.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentSplunkUser.position_ids" formControlName="positionID">
+        </div>
+        <small *ngIf="positionIDCtl.dirty && !positionIDCtl.valid" class="vali-msg">
+          {{requiredMsg}}
+        </small>
+      </div>
+
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label">RPaaS user name</div>
+          <input type="text"  placeholder="Write RPaaS user name if you have" (click)="popupRPaaS.show($event, {position: 'right center', on: 'hover'})"  [(ngModel)]="currentSplunkUser.rpaas_user_name" formControlName="rpaasName">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label">Note</div>
+          <textarea type="text" rows="3" placeholder="Write note if you have" [(ngModel)]="currentSplunkUser.memo" formControlName="memo"></textarea>
+        </div>
+      </div>
+    </form>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="addModal.hide()">Cancel</sm-button>
+    <a class="ui teal button" [class.disabled]='!form.valid || !isCompleted' (click)="submitCreateSplunkUser()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </modal-actions>
+</sm-modal>
+
+<sm-popup #popupPosiID>
+  {{popupPosiIDStr}}
+</sm-popup>
+
+<sm-popup #popupRPaaS>
+  {{popupRPaaSStr}}
+</sm-popup>
+
+<button class="invisible" id="add-modal-close" (click)="addModal.hide()">Hide</button>

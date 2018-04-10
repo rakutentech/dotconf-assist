@@ -1,0 +1,330 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="server icon"></i>Server Classes</h1>
+  <div [style.visibility]= "loadError || user=='admin'? 'hidden' : 'visible'" (click)="openAddModal()" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add server class
+  </div>
+
+  <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message class="positive modal-msg">
+  <message-content>
+    <sm-list class="bulleted">
+      <sm-item>A Server Class is a collection of Forwarders. A Forwarder is the source host where the logs are generated. <a class="link" (click)="infoModal.show({blurring: true})">Example</a></sm-item>
+      <sm-item>You will need to click "Apply" again in "Deployment" to reflect your changes once you changed any thing (App, Input, ServerClass) related to that App</sm-item>
+    </sm-list>
+  </message-content>
+</sm-message>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th class="width30">
+        <div *ngIf="activeAttr=='name'" (click)="sortTable('name')" class="ui button active-attr">
+          Name <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='name'" (click)="sortTable('name')" class="ui button attr">
+          Name <i class="sort icon"></i>
+        </div>
+      </th>
+      <th *ngIf="user=='admin'">
+        <div *ngIf="activeAttr=='user_name'" (click)="sortTable('user_name')" class="ui button active-attr">
+          User <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='user_name'" (click)="sortTable('user_name')" class="ui button attr">
+          User <i class="sort icon"></i>
+        </div>
+      </th>
+
+      <th class="width40">Forwarders</th>
+      <th class="width20">
+        <div *ngIf="activeAttr=='created_at'" (click)="sortTable('created_at')" class="ui button active-attr">
+          Created At <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='created_at'" (click)="sortTable('created_at')" class="ui button attr">
+          Created At <i class="sort icon"></i>
+        </div>
+      </th>
+      <th class="width10">Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let sc of serverClasses | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <!-- <td>{{sc.id}}</td> -->
+      <td id="td{{i}}-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 0)'>
+        <span *ngIf="!eleActive[i][0]" class="ie-text">{{sc.name}}</span>
+        <button *ngIf="eleHovered[i][0]" (click)="onEdit(i, 0, sc)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" (click)="popupSCName.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentServerClass.name" formControlName="name">
+            <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+
+            <a class="ui button ie-confirm" [class.disabled]='!nameCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td *ngIf="user=='admin'">{{sc.user_name}}</td>
+      
+      <td id="td{{i}}-1" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 1)'>
+        <button *ngIf="eleHovered[i][1]" (click)="openEditModal(sc)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <sm-accordion >
+          <sm-accordion-item>
+            <!-- <accordion-title (click)="getSCFwdrs(sc)">{{sc.forwarder_ids.length}} forwarders -->
+            <accordion-title>{{sc.forwarders?.length}} forwarders
+            </accordion-title>
+            <accordion-content>
+              <sm-list class="bulleted">
+                <sm-item *ngFor="let fwdr of sc.forwarders">{{fwdr}}</sm-item>
+              </sm-list>
+            </accordion-content>
+          </sm-accordion-item>
+        </sm-accordion>
+      </td>
+      <td>{{sc.created_at}}</td>
+      <td>
+        <div (click)="delModal.show({blurring: true});openDelModal(sc)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<div class="ui modal" id="addServerClassModal">
+  <div class="ui icon header">
+    <i class="plus icon"></i>
+    Add Server Class
+  </div>
+
+  <div class="content">
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <form class="ui form" [formGroup]="form">
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label">Server class name</div>
+          <input type="text" placeholder="Name" (click)="popupSCName.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentServerClass.name" formControlName="name">
+        </div>
+        <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+          {{requiredMsg}}
+        </small>
+      </div>
+    </form>
+
+    <div class="text-right">
+      <div class="ui labeled input">
+        <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+        <div class="ui icon input right">
+          <input type="text" placeholder="Search..." [(ngModel)]="queryFwdrStr">
+          <i class="search icon"></i>
+        </div>
+      </div>
+      <sm-button class="ui cancel" (click)="hideModal('addServerClassModal')">Cancel</sm-button>
+      <a class="ui teal ok button" [class.disabled]='selectedForwardersID?.length<1 || !nameCtl.valid|| !isCompleted' (click)="addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    </div>
+  </div>
+
+  <div class="scrolling content">
+     <table class="ui selectable celled table">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>
+            <div *ngIf="activeAttr=='name'" (click)="sortTable('name')" class="ui button active-attr">
+              Name <i class="{{arrow}} icon"></i>
+            </div>
+            <div *ngIf="activeAttr!='name'" (click)="sortTable('name')" class="ui button attr">
+              Name <i class="sort icon"></i>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let fwdr of forwarders | search : queryFwdrStr; let i=index ">
+          <td>{{getItemNum() + i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <!-- <input type="checkbox" [checked]="forwarderChecked[fwdr.id]" (change)="forwarderChecked[fwdr.id] = !forwarderChecked[fwdr.id]; onChangeFwdr(fwdr.id, $event.target.checked)" /> -->
+              <!-- <input type="checkbox" [checked]="forwarderChecked[i]" (change)="forwarderChecked[i] = !forwarderChecked[i]; onChangeFwdr(fwdr.id, $event.target.checked)" /> -->
+              <input type="checkbox" (change)="onChangeFwdr(fwdr.id, $event.target.checked)" />
+              <label [style.visibility]='hidden'>select</label>
+            </div>
+          </td>
+          <td>{{fwdr.name}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <sm-button class="ui cancel">Cancel</sm-button>
+    <a class="ui teal ok button" [class.disabled]='selectedForwardersID?.length<1 || !nameCtl.valid || !isCompleted' (click)="addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </div>
+</div>
+
+<div class="ui modal" id="editServerClassModal">
+  <div class="ui icon header">
+    <i class="plus icon"></i>
+    Edt Server Class
+  </div>
+
+  <div class="content">
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <div class="field">
+      <div class="ui labeled input width100">
+        <div class="ui label input-label">Server class name</div>
+        <input class="text-readonly" type="text" [(ngModel)]="currentServerClass.name" disabled>
+      </div>
+    </div>
+
+    <div class="text-right">
+      <div class="ui labeled input">
+        <div class="ui icon input right">
+          <input type="text" placeholder="Search..." [(ngModel)]="queryFwdrStr">
+          <i class="search icon"></i>
+        </div>
+      </div>
+      <sm-button class="ui cancel" (click)="hideModal('editServerClassModal')">Cancel</sm-button>
+      <a class="ui teal ok button" [class.disabled]='selectedForwardersID?.length<1 || !isCompleted' (click)="editRecord(); hideModal('editServerClassModal')">
+        <div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    </div>
+  </div>
+
+  <div class="scrolling content">
+     <table class="ui selectable celled table">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Select</th>
+          <th>
+            <div *ngIf="activeAttr=='name'" (click)="sortTable('name')" class="ui button active-attr">
+              Name <i class="{{arrow}} icon"></i>
+            </div>
+            <div *ngIf="activeAttr!='name'" (click)="sortTable('name')" class="ui button attr">
+              Name <i class="sort icon"></i>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let fwdr of forwarders | search : queryFwdrStr; let i=index ">
+          <td>{{getItemNum() + i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="forwarderChecked[i]" (change)="forwarderChecked[i] = !forwarderChecked[i]; onChangeFwdr(fwdr.id, $event.target.checked)" />
+              <!-- <input type="checkbox" [checked]="true" (change)="onChangeFwdr(fwdr.id, $event.target.checked)" /> -->
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{fwdr.name}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <sm-button class="ui cancel">Cancel</sm-button>
+    <a class="ui teal ok button" [class.disabled]='selectedForwardersID?.length<1 || !isCompleted' (click)="editRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </div>
+</div>
+
+<sm-modal title="Do you want to delete server class?" class="ui small modal" icon="trash" #delModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        <label>Name</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentServerClass.name" disabled>
+      </div>
+
+      <div class="field">
+        <label>Created At</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentServerClass.created_at" disabled>
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="delModal.hide()">Cancel</sm-button>
+    <div class="ui button orange del" (click)="delModal.hide();deleteRecord()">Delete</div>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Forwarders and Server Classes" class="ui small modal" icon="info" #infoModal>
+  <modal-content>
+    <img src="assets/images/forwarders-serverclasses.png" class="ui image">
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="infoModal.hide()">Close</sm-button>
+  </modal-actions>
+</sm-modal>
+
+<button class="invisible" id="add-modal-close" (click)="hideModal('addServerClassModal')">Hide</button>
+
+<sm-popup #popupSCName>
+  {{popupSCNameStr}}
+</sm-popup>

@@ -1,0 +1,291 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="users icon"></i>Users</h1>
+  <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+  <div [style.visibility]= "'hidden'" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add user
+  </div>
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th class="width5">No.</th>
+      <th>
+        <div *ngIf="activeAttr=='user_name'" (click)="sortTable('user_name')" class="ui button active-attr">
+          Username <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='user_name'" (click)="sortTable('user_name')" class="ui button attr">
+          Username <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>
+        <div *ngIf="activeAttr=='email'" (click)="sortTable('email')" class="ui button active-attr">
+          Email <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='email'" (click)="sortTable('email')" class="ui button attr">
+          Email <i class="sort icon"></i>
+        </div>
+      </th>
+      <!-- <th>
+        <div *ngIf="activeAttr=='admin'" (click)="sortTable('admin')" class="ui button active-attr">
+          Admin <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='admin'" (click)="sortTable('admin')" class="ui button attr">
+          Admin <i class="sort icon"></i>
+        </div>
+      </th> -->
+
+      <!-- <th>
+        <div *ngIf="activeAttr=='updated_at'" (click)="sortTable('updated_at')" class="ui button active-attr">
+          UpdatedAt <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='updated_at'" (click)="sortTable('updated_at')" class="ui button attr">
+          UpdatedAt <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>
+        <div *ngIf="activeAttr=='last_login_at'" (click)="sortTable('last_login_at')" class="ui button active-attr">
+          Last Login <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='last_login_at'" (click)="sortTable('last_login_at')" class="ui button attr">
+          Last Login <i class="sort icon"></i>
+        </div>
+      </th> -->
+      <th>
+        <div *ngIf="activeAttr=='group_name'" (click)="sortTable('group_name')" class="ui button active-attr">
+          Group <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='group_name'" (click)="sortTable('group_name')" class="ui button attr">
+          Group <i class="sort icon"></i>
+        </div>
+      </th>
+
+      <th>
+        <div *ngIf="activeAttr=='app_team_name'" (click)="sortTable('app_team_name')" class="ui button active-attr">
+          App Team <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='app_team_name'" (click)="sortTable('app_team_name')" class="ui button attr">
+          App Team <i class="sort icon"></i>
+        </div>
+      </th>
+
+      <th>
+        <div *ngIf="activeAttr=='service_id'" (click)="sortTable('service_id')" class="ui button active-attr">
+          ServiceID <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='service_id'" (click)="sortTable('service_id')" class="ui button attr">
+          ServiceID <i class="sort icon"></i>
+        </div>
+      </th>
+
+      <th>
+        <div *ngIf="activeAttr=='status'" (click)="sortTable('status')" class="ui button active-attr">
+          Status <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='status'" (click)="sortTable('status')" class="ui button attr">
+          Status <i class="sort icon"></i>
+        </div>
+      </th>
+     
+      <th>
+        <div *ngIf="activeAttr=='created_at'" (click)="sortTable('created_at')" class="ui button active-attr">
+          CreatedAt <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='created_at'" (click)="sortTable('created_at')" class="ui button attr">
+          CreatedAt <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let user of users | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td>{{user.user_name}}</td>
+      <td id="td{{i}}-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 0)'>
+        <span *ngIf="!eleActive[i][0]" class="ie-text">{{user.email}}</span>
+        <button *ngIf="eleHovered[i][0]" (click)="onEdit(i, 0, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" [(ngModel)]="currentUser.email" formControlName="email">
+            <small *ngIf="emailCtl.dirty && !emailCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!emailCtl.valid' (click)="editRecord()">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-1" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 1)'>
+        <span *ngIf="!eleActive[i][1]" class="ie-text">{{user.group_name}}</span>
+        <button *ngIf="eleHovered[i][1]" (click)="onEdit(i, 1, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][1]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" [(ngModel)]="currentUser.group_name" formControlName="groupName">
+            <small *ngIf="groupCtl.dirty && !groupCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!groupCtl.valid' (click)="editRecord()">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-2" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 2)'>
+        <span *ngIf="!eleActive[i][2]" class="ie-text">{{user.app_team_name}}</span>
+        <button *ngIf="eleHovered[i][2]" (click)="onEdit(i, 2, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][2]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" [(ngModel)]="currentUser.app_team_name" formControlName="appTeamName">
+            <small *ngIf="appTeamCtl.dirty && !appTeamCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!appTeamCtl.valid' (click)="editRecord()">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-3" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 3)'>
+        <span *ngIf="!eleActive[i][3]" class="ie-text">{{user.service_id}}</span>
+        <button *ngIf="eleHovered[i][3]" (click)="onEdit(i, 3, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][3]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" [(ngModel)]="currentUser.service_id" formControlName="serviceID">
+            <small *ngIf="serviceIDCtl.dirty && !serviceIDCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!serviceIDCtl.valid' (click)="editRecord()">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+      <!-- <td>{{user.last_login_at}}</td> -->
+      <div *ngIf="user.status=='approved';then content else other_content"></div>
+      <ng-template #content>
+        <td>{{user.status}}</td>
+      </ng-template>
+      <ng-template #other_content>
+        <td id="td{{i}}-4" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 4)'>
+          <!-- <span class="ie-text">{{user.status}}</span> -->
+          <span *ngIf="user.status=='Approved'" class="positive" >{{user.status}}<i class="check circle icon green"></i></span>
+          <span *ngIf="user.status=='Canceled'" class="red" >{{user.status}}<i class="remove circle icon red"></i></span>
+          <span *ngIf="user.status=='Waiting'" class="blue" >{{user.status}}<i class="wait circle icon blue"></i></span>
+
+          <button *ngIf="eleHovered[i][4]" (click)="onEdit(i, 4, user)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+          <div *ngIf="eleActive[i][4]" class="ie-div">
+            <sm-select [(model)]="currentUser.status" class="fluid select">
+              <option>Waiting</option>
+              <option>Approved</option>
+              <option>Canceled</option>
+            </sm-select>
+            <button class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </button>
+            <button class="ui button ie-confirm" (click)="editRecord('change_status')">
+              <i class="checkmark icon ie-icon"></i>
+            </button>
+          </div>
+        </td>
+      </ng-template> 
+
+      <td>{{user.created_at}}</td>
+      <td>
+        <div (click)="delModal.show({blurring: true});openDelModal(user)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<sm-modal title="Do you want to delete user?" class="ui small modal" icon="trash" #delModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        <label>Username</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentUser.user_name" disabled>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentUser.email" disabled>
+      </div>
+      <div class="field">
+        <label>Admin</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentUser.admin" disabled>
+      </div>
+      <div class="field">
+        <label>Last Login</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentUser.last_login_at" disabled>
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="delModal.hide()">Cancel</sm-button>
+    <div class="ui button orange del" (click)="delModal.hide();deleteRecord()">Delete</div>
+  </modal-actions>
+</sm-modal>

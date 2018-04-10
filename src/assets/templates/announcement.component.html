@@ -1,0 +1,149 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="announcement icon"></i>Announcements</h1>
+  <div [style.visibility]= "loadError ? 'hidden' : 'visible'" (click)="addModal.show({blurring: true});openAddModal()" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add announcement
+  </div>
+  <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th class="width50">
+        <div *ngIf="activeAttr=='content'" (click)="sortTable('content')" class="ui button active-attr">
+          Content <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='content'" (click)="sortTable('content')" class="ui button attr">
+          Content <i class="sort icon"></i>
+        </div>
+      </th>
+      <th class="width30">
+        <div *ngIf="activeAttr=='created_at'" (click)="sortTable('created_at')" class="ui button active-attr">
+          Created At <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='created_at'" (click)="sortTable('created_at')" class="ui button attr">
+          Created At <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let announcement of announcements | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td class="width30" id="td{{i}}-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 0)'>
+        <span *ngIf="!eleActive[i][0]" class="ie-text">{{announcement.content}}</span>
+        <button *ngIf="eleHovered[i][0]" (click)="onEdit(i, 0, announcement)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" [(ngModel)]="currentAnnouncement.content" formControlName="content">
+            <small *ngIf="contentCtl.dirty && !contentCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!form.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+      <td>{{announcement.created_at}}</td>
+      <td>
+        <div (click)="delModal.show({blurring: true});openDelModal(announcement)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<button class="invisible" id="add-modal-close" (click)="addModal.hide()">Hide</button>
+<sm-modal title="Add a new announcement" class="ui small modal" icon="plus" #addModal>
+  <modal-content>
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+    <form class="ui form" [formGroup]="form">
+      <div class="field">
+        <textarea placeholder="Content" rows="3" [(ngModel)]="currentAnnouncement.content" formControlName="content"></textarea>
+        <small *ngIf="contentCtl.dirty && !contentCtl.valid" class="vali-msg">
+          {{passwordMsg}}
+        </small>
+      </div>
+    </form>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="addModal.hide()">Cancel</sm-button>
+    <a class="ui teal button" [class.disabled]='!form.valid || !isCompleted' (click)="addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Do you want to delete announcement?" class="ui small modal" icon="trash" #delModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        <label>Content</label>
+        <textarea class="text-readonly" rows="3" type="text" [(ngModel)]="currentAnnouncement.content" disabled></textarea>
+      </div>
+      <div class="field">
+        <label>Created At</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentAnnouncement.created_at" disabled>
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="delModal.hide()">Cancel</sm-button>
+    <div class="ui button orange del" (click)="delModal.hide();deleteRecord()">Delete</div>
+  </modal-actions>
+</sm-modal>

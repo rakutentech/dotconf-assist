@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+</head>
+    <body style="background-color: #f6f6f6">
+        <div style="background-color: #ffffff; margin: 10px; padding: 1px 15px">
+                <p>Hello <span style="font-weight:bold;">{{.Who}}</span>,</p>
+                <p><span style="font-weight:bold;">{{.Data.UserName}} </span> has been approved with the following details:</p>
+                <ul>
+                    <li>User Name: {{.Data.UserName}}</li>
+                    <li>Group Name: {{.Data.GroupName}}</li>
+                    <li>App Team Name: {{.Data.AppTeamName}}</li>
+                    <li>Service ID: {{.Data.ServiceID}}</li>
+                    <li>Email: {{.Data.Email}}</li>
+                    <li>Email for Emergency: {{.Data.EmailForEmergency}}</li>
+                </ul>
+                <p>User is now able to login and you can access the account information from <a href="{{.Link}}">HERE</a></p>
+        </div>
+        <div style="margin-top: 10px; font-size: 12px; text-align: center; color: #999999">
+            <span >Splunk as a Service | Data Store Platform Group</span>
+            <br>
+            <span><a href="mailto:{{.AdminEmail}}" style="text-decoration: underline; color: #3498db;">{{.AdminEmail}}</a></span>
+            <br>
+            <span>HipChat: Splunk as a Service</span>
+        </div>
+    </body>
+</html>

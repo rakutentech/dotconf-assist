@@ -1,0 +1,346 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="asterisk icon"></i>Deployment</h1>
+  <div *ngIf="!(resourceLoaded[0]&&resourceLoaded[1]&&isCompleted)" class="ui active left inline loader"></div>
+  <div [style.visibility]= "'hidden'" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add deployment
+  </div>
+
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message class="positive modal-msg">
+  <message-content>
+    <sm-list class="bulleted">
+      <sm-item>The Apps containing configuration of Inputs will be deployed to your Server Class(es) once you apply. You can set up it flexibly. <a class="link" (click)="infoModal.show({blurring: true})">Example</a></sm-item>
+      <sm-item>You will need to click "Apply" again in "Deployment" to reflect your changes once you changed any thing (App, Input, ServerClass) related to that App</sm-item>
+    </sm-list>
+  </message-content>
+</sm-message>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th class="width20">
+        <div *ngIf="activeAttr=='name'" (click)="sortTable('name')" class="ui button active-attr">
+          App Name <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='name'" (click)="sortTable('name')" class="ui button attr">
+          App Name <i class="sort icon"></i>
+        </div>
+      </th>
+      <th *ngIf="user=='admin'">
+        <div *ngIf="activeAttr=='user_name'" (click)="sortTable('user_name')" class="ui button active-attr">
+          User <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='user_name'" (click)="sortTable('user_name')" class="ui button attr">
+          User <i class="sort icon"></i>
+        </div>
+      </th>
+      <th class="width30">Configure</th>
+      <th class="width20">
+        <div *ngIf="activeAttr=='deploy_status'" (click)="sortTable('deploy_status')" class="ui button active-attr">
+          Status <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='deploy_status'" (click)="sortTable('deploy_status')" class="ui button attr">
+          Status <i class="sort icon"></i>
+        </div>
+      </th>
+      <th class="width10">Apply</th>
+      <th class="width10">Deinstall</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let app of apps | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td>{{app.name}}</td>
+      <td *ngIf="user=='admin'">{{app.user_name}}</td>
+      <td id="td{{i}}-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 0)'>
+        <button *ngIf="eleHovered[i][0]" (click)="openEditModal(app)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <sm-accordion>
+          <sm-accordion-item>
+            <accordion-title>{{app.server_classes?.length}} Servr Classes
+            </accordion-title>
+            <accordion-content>
+              <sm-list class="bulleted">
+                <sm-item *ngFor="let sc of app.server_classes">{{sc.name}}</sm-item>
+              </sm-list>
+            </accordion-content>
+          </sm-accordion-item>
+        </sm-accordion>
+      </td>
+
+      <td>
+        <span *ngIf="app.deploy_status==1" class="text-teal positive">Deployed<i class="check circle icon green"></i></span>
+        <span *ngIf="app.deploy_status==2" class="text-blue blue">Requested<i class="wait icon blue"></i></span>
+        <span *ngIf="app.deploy_status==3" class="text-grey">Deinstalled<i class="remove circle icon red"></i></span>
+        <span *ngIf="app.deploy_status==-1">Not deployed</span>
+      </td>
+      <!-- <td class="text-teal" *ngIf="app.deploy_status==1">Deployed</td>
+      <td class="text-blue" *ngIf="app.deploy_status==2">Deployment requested</td>
+      <td class="text-grey" *ngIf="app.deploy_status==3">Deployment deinstalled</td> -->
+      <!-- <td *ngIf="app.deploy_status==-1">Not deployed</td> -->
+      <!-- <td class="grey" *ngIf="app.deploy_status==9">Deployment removed</td> -->
+      <td *ngIf="app.server_classes?.length < 1">Please configure first</td>
+      <td *ngIf="app.server_classes?.length > 0">
+        <div (click)="applyModal.show({blurring: true});openApplyModal(app)" class="tiny circular ui icon button teal tbl-btn">
+          <i class="large send icon"></i>
+        </div>
+      </td>
+
+      <td *ngIf="app.deploy_status==-1||app.deploy_status==3">
+        Not available
+      </td>
+      <td *ngIf="app.deploy_status==1||app.deploy_status==2">
+        <div (click)="delModal.show({blurring: true});openDelModal(app)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large remove circle icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<div class="ui large modal" id="editDeploymentModal">
+  <div class="ui icon header">
+    <i class="configure icon"></i>
+    Configure deployment
+  </div>
+
+  <div class="content">
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <!-- <sm-list class="bulleted">
+      <sm-item *ngFor="let id of selectedSCIDs">{{id}}</sm-item>
+    </sm-list> -->
+
+    <div class="text-right">
+      <div class="ui labeled input">
+        <div class="ui icon input right">
+          <input type="text" placeholder="Search..." [(ngModel)]="queryFwdrStr">
+          <i class="search icon"></i>
+        </div>
+      </div>
+      <sm-button class="ui cancel" (click)="hideModal('editDeploymentModal')">Cancel</sm-button>
+      <a class="ui teal ok button" [class.disabled]='selectedSCIDs?.length<1 || !isCompleted' (click)="editRecord(); hideModal('editDeploymentModal')">
+        <div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    </div>
+  </div>
+
+  <div class="scrolling content">
+    <h4 class="ui horizontal divider header">
+      <i class="file icon"></i>
+      Inputs in App: {{currentApp.name}}
+    </h4>
+
+    <h4 *ngIf="!currentApp.unix_app">Log file inputs</h4>
+    <table class="ui selectable celled table" *ngIf="!currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Log file path</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>Blacklist</th>
+          <th>crcSalt</th>
+          <th>Memo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.file_inputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>{{input.log_file_path}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.blacklist}}</td>
+          <td>{{input.crcsalt}}</td>
+          <td>{{input.memo}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="!currentApp.unix_app">Script inputs</h4>
+    <table class="ui selectable celled table" *ngIf="!currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Script name</th>
+          <th>Sourcetype</th>
+          <th>Log size per day</th>
+          <th>Retention</th>
+          <th>OS</th>
+          <th>Interval</th>
+          <th>Option</th>
+          <th>Exefile</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.script_inputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.sourcetype}}</td>
+          <td>{{input.log_file_size}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.os}}</td>
+          <td>{{input.interval}}</td>
+          <td>{{input.option}}</td>
+          <td>{{input.exefile}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 *ngIf="currentApp.unix_app">Unix app inputs</h4>
+    <table class="ui selectable celled table" *ngIf="currentApp.unix_app">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Script name</th>
+          <th>Retention</th>
+          <th>Interval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let input of currentApp.unix_app_inputs | search : queryInputStr; let i=index ">
+          <td>{{i + 1}}</td>
+          <td>{{input.script_name}}</td>
+          <td>{{input.data_retention_period}}</td>
+          <td>{{input.interval}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4 class="ui horizontal divider header">
+      <i class="server icon"></i>
+      Server classes
+    </h4>
+
+    <table class="ui selectable celled table">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th class="width10">Select</th>
+          <th class="width30">Name</th>
+          <th class="width50">Forwarders</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let sc of serverClasses | search : queryStr; let i=index ">
+          <td>{{getItemNum() + i + 1}}</td>
+          <td>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="scChecked[i]" (change)="scChecked[i]=!scChecked[i];onChangeSC(sc.id, $event.target.checked)" />
+              <label>select</label>
+            </div>
+          </td>
+          <td>{{sc.name}}</td>
+          <td>
+            <li *ngFor="let fwdr of sc.forwarders">
+              <span class="badge">{{fwdr}}</span>
+            </li>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <sm-button class="ui cancel">Cancel</sm-button>
+    <a class="ui teal ok button" [class.disabled]='selectedSCIDs?.length<1 || !isCompleted' (click)="editRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </div>
+</div>
+
+<sm-modal title="Do you want to apply app deployment to Splunk?" class="ui small modal" icon="send" #applyModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        Apply deployment for App ({{currentApp.name}})
+      </div>
+      <div class="field">
+        The logs of inputs included in the app will be forwarded to Splunk after this action
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="applyModal.hide()">Cancel</sm-button>
+    <div class="ui button teal" (click)="applyModal.hide();applyDeployment()">Submit</div>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Do you want to remove app deployment from Splunk?" class="ui small modal" icon="trash" #delModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        This action will deinstall the app from Splunk and the logs will not be forwarded after this action. Do perform only when you have confirmed all the values and steps.
+      </div>
+
+      <div class="field">
+        You can deploy the configuration again by applying the deployment.
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="delModal.hide()">Cancel</sm-button>
+    <div class="ui button orange del" (click)="delModal.hide();deinstallDeploymentApp()">Delete</div>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Deployment" class="ui small modal" icon="info" #infoModal>
+  <modal-content>
+    <img src="assets/images/deployment.png" class="ui image">
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="infoModal.hide()">Close</sm-button>
+  </modal-actions>
+</sm-modal>
+
+<button class="invisible" id="add-modal-close" (click)="hideModal('addDeploymentModal')">Hide</button>

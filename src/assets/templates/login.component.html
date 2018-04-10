@@ -1,0 +1,208 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<sm-tabs>
+  <sm-tab title="Login">
+    <div class="ui masthead vertical segment">
+      <div class="ui container">
+        <div>
+          <div>
+            <sm-message *ngIf="error" class="negative modal-msg">
+              <message-content>
+               <i class="warning icon"></i> {{error}}
+              </message-content>
+            </sm-message>
+            <form class="ui form" [formGroup]="form">
+              <div class="field">
+                <div class="ui left icon input">
+                  <i class="user icon"></i>
+                  <input type="text" placeholder="Username" (keyup)="onUsernameKeyUp()" [(ngModel)]="user.user_name" formControlName="userName">
+                </div>
+                <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+                  {{nameMsg}}
+                </small>
+              </div>
+              <div class="field">
+                <div class="ui left icon input">
+                  <i class="lock icon"></i>
+                  <input type="password" placeholder="Password" [(ngModel)]="user.password" formControlName="password" (keyup.enter)="submitLogin()">
+                </div>
+                <small *ngIf="passwordCtl.dirty && !passwordCtl.valid" class="vali-msg">
+                  {{passwordMsg}}
+                </small>
+              </div>
+              <a class="ui fluid teal button" [class.disabled]='!nameCtl.valid || !passwordCtl.valid || !isCompleted' (click)="submitLogin()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Login</a>
+              <div class="ui right aligned container">
+                <a class="link" (click)="resetPWModal.show({blurring: true})">Forgot password?</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sm-tab>
+
+  <sm-tab title="Sign up">
+    <div class="ui masthead vertical segment">
+      <div class="ui container">
+        <div>
+          <div>
+            <sm-message class="positive modal-msg">
+              <message-content>
+               <i class="info icon"></i>Please apply an account first, we will approve it soon
+              </message-content>
+            </sm-message>
+
+            <sm-message *ngIf="error" class="negative modal-msg">
+              <message-content>
+               <i class="warning icon"></i> {{error}}
+              </message-content>
+            </sm-message>
+
+            <form class="ui form" [formGroup]="form">
+              <div class="field width70">
+                <div class="ui labeled input">
+                  <div class="ui label input-label"><span class="must-mark">*</span>User name</div>
+                  <input type="text" placeholder="Username" (keyup)="onUsernameKeyUp()" (click)="popupUser.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="user.user_name" formControlName="userName">
+                </div>
+                <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+                  {{nameMsg}}
+                </small>
+              </div>
+
+              <div class="field width70">
+                <div class="ui labeled input">
+                  <div class="ui label input-label"><span class="must-mark">*</span>Group name</div>
+                  <input type="text" placeholder="Group name" [(ngModel)]="user.group_name" formControlName="groupName">
+                </div>
+                <small *ngIf="groupCtl.dirty && !groupCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+              </div>
+
+              <div class="field width70">
+                <div class="ui labeled input">
+                  <div class="ui label input-label"><span class="must-mark">*</span>App team name<a class="link" target="_blank" href="{{appTeamLink}}">?</a></div>
+                  <input type="text" placeholder="App team name" (click)="popupApp.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="user.app_team_name" formControlName="appTeamName">
+                </div>
+                <small *ngIf="appTeamCtl.dirty && !appTeamCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+              </div>
+
+              <div class="field width70">
+                <div class="ui labeled input">
+                  <div class="ui label input-label"><span class="must-mark">*</span>Service ID<a class="link" target="_blank" href="{{serviceIDLink}}">?</a></div>
+                  <input type="text" placeholder="Service ID" (click)="popupSID.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="user.service_id" formControlName="serviceID">
+                </div>
+                <small *ngIf="serviceIDCtl.dirty && !serviceIDCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+              </div>
+
+              <div class="field width70">
+                <div class="ui labeled input">
+                  <div class="ui label input-label"><span class="must-mark">*</span>Email for information</div>
+                  <input type="text" placeholder="Email for information" [(ngModel)]="user.email" formControlName="email">
+                </div>
+                <small *ngIf="emailCtl.dirty && !emailCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+              </div>
+
+              <div class="field width70">
+                <div class="ui labeled input">
+                  <div class="ui label input-label"><span class="must-mark">*</span>Email for emergency</div>
+                  <input type="text" placeholder="Email for emergency" (click)="popupEmg.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="user.email_for_emergency" formControlName="emailForEmg">
+                </div>
+                <small *ngIf="emailForEmgCtl.dirty && !emailForEmgCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small>
+              </div>
+
+              <div class="field width70">
+                <div class="ui labeled input">
+                  <div class="ui label input-label"><span class="must-mark">*</span>Password</div>
+                  <input type="password" placeholder="Password" formControlName="password">
+                </div>
+                <small *ngIf="passwordCtl.dirty && !passwordCtl.valid" class="vali-msg">
+                  {{passwordMsg}}
+                </small>
+              </div>
+
+              <a class="ui fluid teal button width70" [class.disabled]='!form.valid || !isCompleted' (click)="submitSignup()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Sign up</a>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sm-tab>
+</sm-tabs>
+
+<sm-modal title="Reset Password" class="ui small modal" icon="user" #resetPWModal>
+  <modal-content>
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <form class="ui form" [formGroup]="form">
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label">User name</div>
+          <input type="text" placeholder="Name" [(ngModel)]="user.user_name" formControlName="userName">
+        </div>
+        <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+          {{requiredMsg}}
+        </small>
+      </div>
+
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label">Email</div>
+          <input type="text" placeholder="Email used for registration" [(ngModel)]="user.email" formControlName="email">
+        </div>
+        <small *ngIf="emailCtl.dirty && !emailCtl.valid" class="vali-msg">
+          {{requiredMsg}}
+        </small>
+      </div>
+
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label">New password</div>
+          <input type="password" placeholder="New password" [(ngModel)]="user.password" formControlName="password">
+        </div>
+        <small *ngIf="passwordCtl.dirty && !passwordCtl.valid" class="vali-msg">
+          {{requiredMsg}}
+        </small>
+      </div>
+    </form>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="resetPWModal.hide()">Cancel</sm-button>
+    <a class="ui teal button" [class.disabled]='!nameCtl.valid || !emailCtl.valid || !passwordCtl.valid || !isCompleted' (click)="submitResetPassword()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </modal-actions>
+</sm-modal>
+
+<button class="invisible" id="reset-password-modal-close" (click)="resetPWModal.hide()">Hide</button>
+
+<sm-popup #popupUser>
+  {{popupUserStr}}
+</sm-popup>
+
+<sm-popup #popupApp>
+  {{popupAppStr}}
+</sm-popup>
+<sm-popup #popupSID>
+  {{popupSIDStr}}
+</sm-popup>
+<sm-popup #popupEmg>
+  {{popupEmgStr}}
+</sm-popup>

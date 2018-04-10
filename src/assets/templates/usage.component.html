@@ -1,0 +1,174 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="yen icon"></i>Usage</h1>
+  <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+  <div [style.visibility]= "'hidden'" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add usage
+  </div>
+
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<form class="ui form" [formGroup]="form">
+  <div class="field">
+    <div class="ui labeled input">
+      <div class="ui label input-label-sm">Month</div>
+      <sm-select [(model)]="month" class="fluid select">
+        <option *ngFor="let mon of monthOptions">{{mon}}</option>
+      </sm-select>
+      <a class="ui teal button" [class.disabled]='!isCompleted' (click)="loadUsage()">Submit</a>
+    </div>
+  </div>
+</form>
+
+<h2 class="ui floated"><i class="file icon"></i>Log Size for ServiceID: {{user.service_id}}</h2>
+<div class="ui divider"></div>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th class="width10">No.</th>
+      <th class="width60">
+        <div *ngIf="activeAttr=='host'" (click)="sortTable('host')" class="ui button active-attr">
+          Host <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='host'" (click)="sortTable('host')" class="ui button attr">
+          Host <i class="sort icon"></i>
+        </div>
+      </th>
+      <th class="width30">
+        <div *ngIf="activeAttr=='size_mb'" (click)="sortTable('size_mb')" class="ui button active-attr">
+          Size (MB) <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='size_mb'" (click)="sortTable('size_mb')" class="ui button attr">
+          Size (MB) <i class="sort icon"></i>
+        </div>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let log of logSizes | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td>{{log.host}}</td>
+      <td>{{log.size_mb}}</td>
+    </tr>
+    <tr>
+      <td>Total</td>
+      <td></td>
+      <td>{{totalLogSize}}</td>
+    </tr>
+  </tbody>
+</table>
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<h2 class="ui floated"><i class="database icon"></i>Storage Size for ServiceID: {{user.service_id}}</h2>
+<div class="ui divider"></div>
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th class="width10">No.</th>
+      <th class="width50">
+        <div *ngIf="activeAttr=='index_name'" (click)="sortTable('index_name')" class="ui button active-attr">
+          Index <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='index_name'" (click)="sortTable('index_name')" class="ui button attr">
+          Index <i class="sort icon"></i>
+        </div>
+      </th>
+      <th class="width40">
+        <div *ngIf="activeAttr=='size_mb'" (click)="sortTable('size_mb')" class="ui button active-attr">
+          Size (MB) <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='size_mb'" (click)="sortTable('size_mb')" class="ui button attr">
+          Size (MB) <i class="sort icon"></i>
+        </div>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let log of storageSizes | search : queryStr | orderBy : orderAttr; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td>{{log.index_name}}</td>
+      <td>{{log.size_mb}}</td>
+    </tr>
+    <tr>
+      <td>Total</td>
+      <td></td>
+      <td>{{totalStorageSize}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 class="ui floated"><i class="yen icon"></i>Cost Estimation for ServiceID: {{user.service_id}}</h2>
+<div class="ui divider"></div>
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th class="width10">Type</th>
+      <th class="width10">Size (GB)</th>
+      <th class="width10">Unit Price (Yen/GB/Month)</th>
+      <th class="width10">Price of {{month}} (Yen)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Service charge</td>
+      <td>{{totalLogSize}} / 1024 = {{totalLogSize/1024 | number:'1.2-3'}}</td>
+      <td *ngIf="price?.length>0">{{price[0].service_price}}</td>
+      <td *ngIf="price?.length>0">{{totalLogSize/1024*price[0].service_price | number:'1.0-0'}}</td>
+    </tr>
+    <tr>
+      <td>Storage charge</td>
+      <td>{{totalStorageSize}} / 1024 = {{totalStorageSize/1024 | number:'1.2-3'}}</td>
+      <td *ngIf="price?.length>0">{{price[0].storage_price}}</td>
+      <td *ngIf="price?.length>0">{{totalStorageSize/1024*price[0].storage_price | number:'1.0-0'}}</td>
+    </tr>
+    <tr>
+      <td>Total</td>
+      <td></td>
+      <td></td>
+      <td *ngIf="price?.length>0">{{totalLogSize/1024*price[0].service_price + totalStorageSize/1024*price[0].storage_price | number:'1.0-0'}}</td>
+    </tr>
+  </tbody>

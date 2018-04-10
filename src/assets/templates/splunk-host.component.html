@@ -1,0 +1,242 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="server icon"></i>Splunk hosts</h1>
+  <div [style.visibility]= "loadError ? 'hidden' : 'visible'" (click)="addModal.show({blurring: true});openAddModal()" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add host
+  </div>
+  <div *ngIf="!isCompleted" class="ui active left inline loader"></div>
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>
+        <div *ngIf="activeAttr=='name'" (click)="sortTable('name')" class="ui button active-attr">
+          Name <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='name'" (click)="sortTable('name')" class="ui button attr">
+          Name <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>
+        <div *ngIf="activeAttr=='role'" (click)="sortTable('role')" class="ui button active-attr">
+          Role <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='role'" (click)="sortTable('role')" class="ui button attr">
+          Role <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>
+        <div *ngIf="activeAttr=='env'" (click)="sortTable('env')" class="ui button active-attr">
+          Env <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='env'" (click)="sortTable('env')" class="ui button attr">
+          Env <i class="sort icon"></i>
+        </div>
+      </th>
+
+      <th>
+        <div *ngIf="activeAttr=='created_at'" (click)="sortTable('created_at')" class="ui button active-attr">
+          Created At <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='created_at'" (click)="sortTable('created_at')" class="ui button attr">
+          Created At <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let splunkHost of splunkHosts | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td id="td{{i}}-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 0)'>
+        <span *ngIf="!eleActive[i][0]" class="ie-text">{{splunkHost.name}}</span>
+        <button *ngIf="eleHovered[i][0]" (click)="onEdit(i, 0, splunkHost)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="form">
+            <input type="text" [(ngModel)]="currentSplunkHost.name" formControlName="name">
+            <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!nameCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-1" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 1)'>
+        <span *ngIf="!eleActive[i][1]" class="ie-text">{{splunkHost.role}}</span>
+        <button *ngIf="eleHovered[i][1]" (click)="onEdit(i, 1, splunkHost)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][1]" class="ie-div">
+          <sm-select [(model)]="currentSplunkHost.role" class="fluid select width100">
+            <option>SH</option>
+            <option>SHCMember</option>
+            <option>DPLY</option>
+            <option>IDX</option>
+            <option>MST</option>
+            <option>FWDR</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEdit()">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+
+      <td id="td{{i}}-2" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 2)'>
+        <span *ngIf="!eleActive[i][2]" class="ie-text">{{splunkHost.env}}</span>
+        <button *ngIf="eleHovered[i][2]" (click)="onEdit(i, 2, splunkHost)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][2]" class="ie-div">
+          <sm-select [(model)]="currentSplunkHost.env" class="fluid select width100">
+            <option>prod</option>
+            <option>stg</option>
+            <option>dev</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEdit()">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+
+      <td>{{splunkHost.created_at}}</td>
+      <td>
+        <div (click)="delModal.show({blurring: true});openDelModal(splunkHost)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<button class="invisible" id="add-modal-close" (click)="addModal.hide()">Hide</button>
+<sm-modal title="Add splunk host" class="ui small modal" icon="plus" #addModal>
+  <modal-content>
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <form class="ui form" [formGroup]="form">
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label-sm">Host name</div>
+          <input type="text" placeholder="Name" [(ngModel)]="currentSplunkHost.name" formControlName="name">
+        </div>
+        <small *ngIf="nameCtl.dirty && !nameCtl.valid" class="vali-msg">
+          {{requiredMsg}}
+        </small>
+      </div>
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label-sm">Role</div>
+          <sm-select [(model)]="currentSplunkHost.role" class="fluid select width100">
+            <option>SH</option>
+            <option>SHCMember</option>
+            <option>DPLY</option>
+            <option>IDX</option>
+            <option>MST</option>
+            <option>FWDR</option>
+          </sm-select>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="ui labeled input">
+          <div class="ui label input-label-sm">Env</div>
+          <sm-select [(model)]="currentSplunkHost.env" class="fluid select width100">
+            <option>prod</option>
+            <option>stg</option>
+            <option>dev</option>
+          </sm-select>
+        </div>
+      </div>
+    </form>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="addModal.hide()">Cancel</sm-button>
+    <a class="ui teal button" [class.disabled]='!nameCtl.valid || !isCompleted' (click)="addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Do you want to delete splunk host?" class="ui small modal" icon="trash" #delModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        <label>Name</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentSplunkHost.name" disabled>
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentSplunkHost.role" disabled>
+      </div>
+      <div class="field">
+        <label>Env</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentSplunkHost.env" disabled>
+      </div>
+      <div class="field">
+        <label>Created At</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentSplunkHost.created_at" disabled>
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="delModal.hide()">Cancel</sm-button>
+    <div class="ui button orange del" (click)="delModal.hide();deleteRecord()">Delete</div>
+  </modal-actions>
+</sm-modal>

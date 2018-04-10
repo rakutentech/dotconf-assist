@@ -1,0 +1,850 @@
+<sm-message *ngFor="let message of messages" icon="{{message.icon}}" class="{{message.type}} main-msg">
+  <message-header>
+    {{message.status}}
+  </message-header>
+  <message-content>
+    {{message.text}}
+  </message-content>
+</sm-message>
+
+<div class="content-header">
+  <h1 class="ui floated content-title"><i class="file text outline icon"></i>Inputs</h1>
+  <div [style.visibility]= "loadError || user=='admin' ? 'hidden' : 'visible'" (click)="addModal.show({blurring: true});openAddModal()" class="content-header-btn circular ui icon button teal">
+    <i class="plus icon"></i> Add input
+  </div>
+  <div *ngIf="!(inputsLoaded[0]&&inputsLoaded[1]&&inputsLoaded[2]&&isCompleted)" class="ui active left inline loader"></div>
+  <div class="ui icon input main-search">
+    <input type="text" placeholder="Search..." [(ngModel)]="queryStr">
+    <i class="search icon"></i>
+  </div>
+</div>
+
+<div class="ui divider"></div>
+
+<sm-message class="positive modal-msg">
+  <message-content>
+    <sm-list class="bulleted">
+      <sm-item>An app is a collection of inputs. An input is the configuration of a source which generates the logs. <a class="link" (click)="infoModal.show({blurring: true})">Example. </a> Also see <a class="link" target="_blank" href="{{inputLink}}">How to set input?</a></sm-item>
+      <sm-item>You will need to click "Apply" again in "Deployment" to reflect your changes once you changed any thing (App, Input, ServerClass) related to that App</sm-item>
+    </sm-list>
+  </message-content>
+</sm-message>
+
+<sm-message *ngIf="loadError" icon="warning" class="warning body-msg">
+  <message-header>
+    {{loadError}}
+  </message-header>
+  <message-content>
+    Please contact admin
+  </message-content>
+</sm-message>
+
+<h2 class="ui floated"><i class="file icon"></i>Log file inputs</h2>
+<div class="ui divider"></div>
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>
+        <div *ngIf="activeAttr=='log_file_path'" (click)="sortTable('log_file_path')" class="ui button active-attr">
+          Path <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='log_file_path'" (click)="sortTable('log_file_path')" class="ui button attr">
+          Path <i class="sort icon"></i>
+        </div>
+      </th>
+      <th *ngIf="user=='admin'">
+        <div *ngIf="activeAttr=='user_name'" (click)="sortTable('user_name')" class="ui button active-attr">
+          User <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='user_name'" (click)="sortTable('user_name')" class="ui button attr">
+          User <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>Sourcetype</th>
+      <th>Log size per day</th>
+      <th>Retention</th>
+      <th>Blacklist</th>
+      <th>crcSalt</th>
+      <th>Memo</th>
+      <th>App</th>
+      <th>Created At</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let input of fileInputs | search : queryStr | orderBy : orderAttr | paginate: { itemsPerPage: itemNumPerPage, currentPage: curentP }; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td id="td{{i}}-0" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 0)'>
+        <span *ngIf="!eleActive[i][0]" class="ie-text">{{input.log_file_path}}</span>
+        <button *ngIf="eleHovered[i][0]" (click)="onEdit(i, 0, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="fileInputForm">
+            <input type="text" (click)="popupLogFilePath.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentFileInput.log_file_path" formControlName="log_file_path">
+            <small *ngIf="logFilePathCtl.dirty && !logFilePathCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!logFilePathCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td *ngIf="user=='admin'">{{input.user_name}}</td>
+
+      <td id="td{{i}}-1" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 1)'>
+        <span *ngIf="!eleActive[i][1]" class="ie-text">{{input.sourcetype}}</span>
+        <button *ngIf="eleHovered[i][1]" (click)="onEdit(i, 1, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][1]" class="ie-div">
+          <form class="ui form" [formGroup]="fileInputForm">
+            <input type="text" (click)="popupSourcetype.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentFileInput.sourcetype" formControlName="fileSourcetype">
+            <small *ngIf="fileSourcetypeCtl.dirty && !fileSourcetypeCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!fileSourcetypeCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-2" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 2)'>
+        <span *ngIf="!eleActive[i][2]" class="ie-text">{{input.log_file_size}}</span>
+        <button *ngIf="eleHovered[i][2]" (click)="onEdit(i, 2, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][2]" class="ie-div">
+          <sm-select [(model)]="currentFileInput.log_file_size" class="fluid select">
+            <option *ngFor="let opt of logSizeOptions">{{opt}}</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEdit()">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+
+      <td id="td{{i}}-3" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 3)'>
+        <span *ngIf="!eleActive[i][3]" class="ie-text">{{input.data_retention_period}}</span>
+        <button *ngIf="eleHovered[i][3]" (click)="onEdit(i, 3, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][3]" class="ie-div">
+          <sm-select [(model)]="currentFileInput.data_retention_period" class="fluid select">
+            <option *ngFor="let opt of retentionOptions">{{opt}}</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEdit()">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+
+      <td id="td{{i}}-4" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 4)'>
+        <span *ngIf="!eleActive[i][4]" class="ie-text">{{input.blacklist}}</span>
+        <button *ngIf="eleHovered[i][4]" (click)="onEdit(i, 4, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][4]" class="ie-div">
+          <form class="ui form" [formGroup]="fileInputForm">
+            <input type="text" (click)="popupBlacklist.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentFileInput.blacklist" formControlName="blacklist">
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+          <sm-accordion >
+            <sm-accordion-item>
+              <accordion-title>How to write blacklist regex?
+              </accordion-title>
+              <accordion-content>
+                <sm-list class="bulleted">
+                  <sm-item *ngFor="let tip of blacklistTip; let i=index ">{{tip.desc}}
+                    <div class="ui label">
+                      {{tip.example}}
+                    </div>
+                  </sm-item>
+                </sm-list>
+              </accordion-content>
+            </sm-accordion-item>
+          </sm-accordion>
+        </div>
+      </td>
+
+      <td id="td{{i}}-5" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 5)'>
+        <span *ngIf="!eleActive[i][5]" class="ie-text">{{input.crcsalt}}</span>
+        <button *ngIf="eleHovered[i][5]" (click)="onEdit(i, 5, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][5]" class="ie-div">
+          <form class="ui form" [formGroup]="fileInputForm">
+            <!-- <sm-checkbox label="<SOURCE>" [control]="checkboxControl"></sm-checkbox> -->
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="crcSaltChecked" (change)="crcSaltChecked = !crcSaltChecked; onChangeCrcSalt(input, $event.target.checked)" />
+              <label>&lt;SOURCE&gt;</label>
+            </div>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-6" (mouseleave)="mouseLeave()" on-mouseover='mouseOver(i, 6)'>
+        <span *ngIf="!eleActive[i][6]" class="ie-text">{{input.memo}}</span>
+        <button *ngIf="eleHovered[i][6]" (click)="onEdit(i, 6, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="eleActive[i][6]" class="ie-div">
+          <form class="ui form" [formGroup]="fileInputForm">
+            <input type="text" [(ngModel)]="currentFileInput.memo" formControlName="memo">
+            <a class="ui button ie-cancel" (click)="cancelEdit()">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!nameCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td>{{input.app_name}}</td>
+      <td>{{input.created_at}}</td>
+      <td *ngIf="input.app_name!=''">Please remove from app first</td>
+      <td *ngIf="input.app_name==''">
+        <div (click)="delModal.show({blurring: true});openDelModal(input)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<div class="ui right labeled input">
+  <sm-select [control]="selectControl" [(model)]="itemNumPerPage" class="fluid search item-per-page">
+    <option>10</option>
+    <option>20</option>
+    <option>50</option>
+    <option>100</option>
+  </sm-select>
+  <div class="ui label">Per Page</div>
+</div>
+<pagination-controls (pageChange)="curentP = $event"></pagination-controls>
+
+<h2 class="ui floated"><i class="file code outline icon"></i>Script inputs</h2>
+<div class="ui divider"></div>
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>Script</th>
+      <th *ngIf="user=='admin'">
+        <div *ngIf="activeAttr=='user_name'" (click)="sortTable('user_name')" class="ui button active-attr">
+          User <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='user_name'" (click)="sortTable('user_name')" class="ui button attr">
+          User <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>Sourcetype</th>
+      <th>Log size per day</th>
+      <th>Retention</th>
+      <th>OS</th>
+      <th>Interval</th>
+      <th>Exefile</th>
+      <th>Option</th>
+      <th>App</th>
+      <th>Created At</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let input of scriptInputs | search : queryStr | orderBy : orderAttr; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td id="td{{i}}-7" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 0, 'second')">
+        <span *ngIf="!secondEleActive[i][0]" class="ie-text"><a (click)="showScriptModal.show({blurring: true});openShowScriptModal(input)">{{input.script_name}}</a></span>
+        <button *ngIf="secondEleHovered[i][0]" (click)="onEdit(i, 0, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="scriptInputForm">
+            <!-- <input type="text" [(ngModel)]="inputType.script_name" formControlName="script_name">
+            <small *ngIf="sourcetypeCtl.dirty && !sourcetypeCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small> -->
+            <input type="file" #scriptFile accept="*" (change)="onChangeFile($event)">
+            <a class="ui button ie-cancel" (click)="cancelEditInput('second')">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='currentScriptInput.script==null' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td *ngIf="user=='admin'">{{input.user_name}}</td>
+
+      <td id="td{{i}}-8" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 1, 'second')">
+        <span *ngIf="!secondEleActive[i][1]" class="ie-text">{{input.sourcetype}}</span>
+        <button *ngIf="secondEleHovered[i][1]" (click)="onEdit(i, 1, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][1]" class="ie-div">
+          <form class="ui form" [formGroup]="scriptInputForm">
+            <input type="text" (click)="popupSourcetype.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentScriptInput.sourcetype" formControlName="scriptSourcetype">
+            <small *ngIf="scriptSourcetypeCtl.dirty && !scriptSourcetypeCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEditInput('second')">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!scriptSourcetypeCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+      <td id="td{{i}}-9" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 2, 'second')">
+        <span *ngIf="!secondEleActive[i][2]" class="ie-text">{{input.log_file_size}}</span>
+        <button *ngIf="secondEleHovered[i][2]" (click)="onEdit(i, 2, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][2]" class="ie-div">
+          <sm-select [(model)]="currentScriptInput.log_file_size" class="fluid select">
+            <option *ngFor="let opt of logSizeOptions">{{opt}}</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEditInput('second')">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+
+      <td id="td{{i}}-10" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 3, 'second')">
+        <span *ngIf="!secondEleActive[i][3]" class="ie-text">{{input.data_retention_period}}</span>
+        <button *ngIf="secondEleHovered[i][3]" (click)="onEdit(i, 3, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][3]" class="ie-div">
+          <sm-select [(model)]="currentScriptInput.data_retention_period" class="fluid select">
+            <option *ngFor="let opt of retentionOptions">{{opt}}</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEditInput('second')">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+
+      <td id="td{{i}}-11" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 4, 'second')">
+        <span *ngIf="!secondEleActive[i][4]" class="ie-text">{{input.os}}</span>
+        <button *ngIf="secondEleHovered[i][4]" (click)="onEdit(i, 4, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][4]" class="ie-div">
+          <sm-select [(model)]="currentScriptInput.os" class="fluid select">
+            <option *ngFor="let opt of osOptions">{{opt}}</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEditInput('second')">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+
+      <td id="td{{i}}-12" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 5, 'second')">
+        <span *ngIf="!secondEleActive[i][5]" class="ie-text">{{input.interval}}</span>
+        <button *ngIf="secondEleHovered[i][5]" (click)="onEdit(i, 5, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][5]" class="ie-div">
+          <form class="ui form" [formGroup]="scriptInputForm">
+            <input type="text" placeholder="<number>or<cron shedule>" (click)="popupInterval.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentScriptInput.interval" formControlName="interval">
+            <small *ngIf="scriptIntervalCtl.dirty && !scriptIntervalCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEditInput('second')">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!scriptIntervalCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-13" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 6, 'second')">
+        <span *ngIf="!secondEleActive[i][6]" class="ie-text">{{input.exefile}}</span>
+        <button *ngIf="secondEleHovered[i][6]" (click)="onEdit(i, 6, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][6]" class="ie-div">
+          <sm-select [(model)]="currentScriptInput.exefile" class="fluid select">
+            <option *ngFor="let opt of exeFileOptions">{{opt}}</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEditInput('second')">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+      <td id="td{{i}}-14" (mouseleave)="mouseLeaveInput('second')" on-mouseover="mouseOverInput(i, 7, 'second')">
+        <span *ngIf="!secondEleActive[i][7]" class="ie-text">{{input.option}}</span>
+        <button *ngIf="secondEleHovered[i][7]" (click)="onEdit(i, 7, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="secondEleActive[i][7]" class="ie-div">
+          <form class="ui form" [formGroup]="scriptInputForm">
+            <input type="text" (click)="popupOption.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentScriptInput.option" formControlName="option">
+            <a class="ui button ie-cancel" (click)="cancelEdit('second')">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+      <td>{{input.app_name}}</td>
+      <td>{{input.created_at}}</td>
+      <td *ngIf="input.app_name!=''">Please remove from app first</td>
+      <td *ngIf="input.app_name==''">
+        <div (click)="delModal.show({blurring: true});openDelModal(input)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 class="ui floated"><i class="linux icon"></i>Unix app inputs</h2>
+<div class="ui divider"></div>
+<table class="ui selectable celled table">
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th>Script</th>
+      <th *ngIf="user=='admin'">
+        <div *ngIf="activeAttr=='user_name'" (click)="sortTable('user_name')" class="ui button active-attr">
+          User <i class="{{arrow}} icon"></i>
+        </div>
+        <div *ngIf="activeAttr!='user_name'" (click)="sortTable('user_name')" class="ui button attr">
+          User <i class="sort icon"></i>
+        </div>
+      </th>
+      <th>Interval</th>
+      <th>Retention</th>
+      <th>App</th>
+      <th>Created At</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let input of unixAppInputs | search : queryStr | orderBy : orderAttr; let i=index ">
+      <td>{{getItemNum() + i + 1}}</td>
+      <td>{{input.script_name}}</td>
+      <td *ngIf="user=='admin'">{{input.user_name}}</td>
+      <td id="td{{i}}-15" (mouseleave)="mouseLeaveInput('third')" on-mouseover="mouseOverInput(i, 0, 'third')">
+        <span *ngIf="!thirdEleActive[i][0]" class="ie-text">{{input.interval}}</span>
+        <button *ngIf="thirdEleHovered[i][0]" (click)="onEdit(i, 0, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="thirdEleActive[i][0]" class="ie-div">
+          <form class="ui form" [formGroup]="unixAppInputForm">
+            <input type="text" placeholder="<number>or<cron shedule>" (click)="popupInterval.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentUnixAppInput.interval" formControlName="interval">
+            <small *ngIf="unixAppIntervalCtl.dirty && !unixAppIntervalCtl.valid" class="vali-msg">
+              {{requiredMsg}}
+            </small>
+            <a class="ui button ie-cancel" (click)="cancelEditInput('third')">
+              <i class="remove icon ie-icon"></i>
+            </a>
+            <a class="ui button ie-confirm" [class.disabled]='!unixAppIntervalCtl.valid' (click)="editRecord(i)">
+              <i class="checkmark icon ie-icon"></i>
+            </a>
+          </form>
+        </div>
+      </td>
+
+      <td id="td{{i}}-16" (mouseleave)="mouseLeaveInput('third')" on-mouseover="mouseOverInput(i, 1, 'third')">
+        <span *ngIf="!thirdEleActive[i][1]" class="ie-text">{{input.data_retention_period}}</span>
+        <button *ngIf="thirdEleHovered[i][1]" (click)="onEdit(i, 1, input)" class="ui button ie-tip"><i class="edit icon ie-icon"></i></button>
+        <div *ngIf="thirdEleActive[i][1]" class="ie-div">
+          <sm-select [(model)]="currentUnixAppInput.data_retention_period" class="fluid select">
+            <option *ngFor="let opt of retentionOptions">{{opt}}</option>
+          </sm-select>
+          <button class="ui button ie-cancel" (click)="cancelEditInput('third')">
+            <i class="remove icon ie-icon"></i>
+          </button>
+          <button class="ui button ie-confirm" (click)="editRecord(i)">
+            <i class="checkmark icon ie-icon"></i>
+          </button>
+        </div>
+      </td>
+      <td>{{input.app_name}}</td>
+      <td>{{input.created_at}}</td>
+      <td *ngIf="input.app_name!=''">Please remove from app first</td>
+      <td *ngIf="input.app_name==''">
+        <div (click)="delModal.show({blurring: true});openDelModal(input)" class="tiny circular ui icon button orange del tbl-btn">
+          <i class="large trash icon"></i>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<button class="invisible" id="add-modal-close" (click)="addModal.hide()">Hide</button>
+<sm-modal title="Add input" class="ui small modal" icon="plus" #addModal>
+  <modal-content>
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+    <div class="ui form">
+      <div class="inline fields">
+        <label>Input type</label>
+        <div class="field">
+          <div class="ui radio checkbox">
+            <input type="radio" [checked]="inputType=='file'" (change)="onChangeLogType('file')">
+            <label>Log File Input</label>
+          </div>
+        </div>
+        <div class="field">
+          <div class="ui radio checkbox">
+            <input type="radio" [checked]="inputType=='script'" (change)="onChangeLogType('script')">
+            <label>Script Input</label>
+          </div>
+        </div>
+        <div class="field">
+          <div class="ui radio checkbox">
+            <input type="radio" [checked]="inputType=='unixapp'" (change)="onChangeLogType('unixapp')">
+            <label>Unix App Input</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <sm-message *ngIf="inputType=='unixapp'" class="positive modal-msg">
+      <message-content>
+        <sm-list class="bulleted">
+          <sm-item>Unix App Inputs are prewritten shell scripts, they can only be executed on *nix environments</sm-item>
+          <sm-item>The more frequently the script is executed, the larger the input size will be</sm-item>
+          <sm-item>The most commonly used scripts are: cpu, df, vmstat, iostat and interfaces</sm-item>
+          <sm-item>Check source code of each script from <a class="link" (click)="infoModal.show({blurring: true})">here</a></sm-item>
+        </sm-list>
+      </message-content>
+    </sm-message>
+    
+    <h4 class="ui horizontal divider header">
+      <i class="tag icon"></i>
+      Basic Settings
+    </h4>
+
+    <div *ngIf="inputType=='file'">
+      <form class="ui form" [formGroup]="fileInputForm">
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Log file path</div>
+            <textarea placeholder="Log file path" rows="3" (click)="popupLogFilePath.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentFileInput.log_file_path" formControlName="log_file_path"></textarea>
+          </div>
+          <small *ngIf="logFilePathCtl.dirty && !logFilePathCtl.valid" class="vali-msg">
+            {{requiredMsg}}
+          </small>
+        </div>
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Source type</div>
+            <input type="text" placeholder="Sourcetype" (click)="popupSourcetype.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentFileInput.sourcetype" formControlName="fileSourcetype">
+          </div>
+          <small *ngIf="fileSourcetypeCtl.dirty && !fileSourcetypeCtl.valid" class="vali-msg">
+            {{requiredMsg}}
+          </small>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Log size per day</div>
+            <sm-select [(model)]="currentFileInput.log_file_size" class="fluid select width100">
+              <option *ngFor="let opt of logSizeOptions">{{opt}}</option>
+            </sm-select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Data retention period</div>
+            <sm-select [(model)]="currentFileInput.data_retention_period" class="fluid select width100">
+              <option *ngFor="let opt of retentionOptions">{{opt}}</option>
+            </sm-select>
+          </div>
+        </div>
+
+        <h4 class="ui horizontal divider header">
+          <i class="tag icon"></i>
+          Advanced Settings
+        </h4>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">crcSalt</div>
+            <!-- <sm-checkbox label="<SOURCE>" [control]="checkboxControl"></sm-checkbox> -->
+            <div class="ui checkbox">
+              <input type="checkbox" [checked]="crcSaltChecked" (change)="crcSaltChecked = !crcSaltChecked; onChangeCrcSalt(input, $event.target.checked)" />
+              <label>&lt;SOURCE&gt;</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Blacklist</div>
+            <input type="text" placeholder="Blacklist regular expression" (click)="popupBlacklist.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentFileInput.blacklist" formControlName="blacklist">
+          </div>
+          <sm-accordion>
+            <sm-accordion-item>
+              <accordion-title>How to write blacklist regular expression?
+              </accordion-title>
+              <accordion-content>
+                <sm-list class="bulleted">
+                  <sm-item *ngFor="let tip of blacklistTip; let i=index ">{{tip.desc}}
+                    <div class="ui label">
+                      {{tip.example}}
+                    </div>
+                  </sm-item>
+                </sm-list>
+              </accordion-content>
+            </sm-accordion-item>
+          </sm-accordion>
+        </div>
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Other specifications</div>
+            <textarea rows="3" placeholder="If you have other specifications that need admin to configure for you, write them here" [(ngModel)]="currentFileInput.memo" formControlName="memo"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div *ngIf="inputType=='script'">
+      <form class="ui form" [formGroup]="scriptInputForm">
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Source type</div>
+            <input type="text" placeholder="Sourcetype" (click)="popupSourcetype.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentScriptInput.sourcetype" formControlName="scriptSourcetype">
+          </div>
+          <small *ngIf="scriptSourcetypeCtl.dirty && !scriptSourcetypeCtl.valid" class="vali-msg">
+            {{requiredMsg}}
+          </small>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Log size per day</div>
+            <sm-select [(model)]="currentScriptInput.log_file_size" class="fluid select width100">
+              <option *ngFor="let opt of logSizeOptions">{{opt}}</option>
+            </sm-select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Data retention period</div>
+            <sm-select [(model)]="currentScriptInput.data_retention_period" class="fluid select width100">
+              <option *ngFor="let opt of retentionOptions">{{opt}}</option>
+            </sm-select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Script runs on</div>
+            <sm-select [(model)]="currentScriptInput.os" class="fluid select width100">
+              <option *ngFor="let opt of osOptions">{{opt}}</option>
+            </sm-select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Execution file</div>
+            <sm-select [(model)]="currentScriptInput.exefile" class="fluid select width100">
+              <option *ngFor="let opt of exeFileOptions">{{opt}}</option>
+            </sm-select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Interval</div>
+            <input type="text" placeholder="<number>or<cron shedule>" (click)="popupInterval.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentScriptInput.interval" formControlName="interval">
+          </div>
+          <small *ngIf="scriptIntervalCtl.dirty && !scriptIntervalCtl.valid" class="vali-msg">
+            {{requiredMsg}}
+          </small>
+        </div>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Script file</div>
+            <input type="file" #scriptFile accept="*" (change)="onChangeFile($event)">
+          </div>
+        </div>
+
+        <h4 class="ui horizontal divider header">
+          <i class="tag icon"></i>
+          Advanced Settings
+        </h4>
+
+        <div class="field">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Option</div>
+            <input type="text" placeholder="option" (click)="popupOption.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="currentScriptInput.option" formControlName="option">
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div *ngIf="inputType=='unixapp'">
+      <form class="ui form" [formGroup]="unixAppInputForm">
+        <div class="field" *ngIf="inputType!='unixapp'">
+          <div class="ui labeled input">
+            <div class="ui label input-label">Data retention period</div>
+            <sm-select [(model)]="currentFileInput.data_retention_period" class="fluid select width100">
+              <option *ngFor="let opt of retentionOptions">{{opt}}</option>
+            </sm-select>
+          </div>
+        </div>
+
+        <sm-button class="teal" (click)="recommendedUnixAppInputConfig()">Recommended configuration</sm-button>
+        <sm-button (click)="resetUnixAppInputConfig()">Reset</sm-button>
+
+        <!-- <sm-list class="bulleted">
+          <sm-item *ngFor="let ipt of unixAppInputOptions">{{ipt.interval}}</sm-item>
+        </sm-list> -->
+
+        <table class="ui selectable celled table">
+          <thead>
+            <tr>
+              <th class="width30">Script name</th>
+              <th class="width40">Interval</th>
+              <th class="width30">Data Retention Period</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ipt of unixAppInputOptions; let i=index ">
+              <td>
+                <div class="ui checkbox">
+                  <input type="checkbox" [checked]="unixAppInputChecked[i]" (change)="unixAppInputChecked[i] = !unixAppInputChecked[i]; onChangeUnixAppInput(ipt.script_name, $event.target.checked)" />
+                  <label>{{ipt.script_name}}</label>
+                </div>
+              </td>
+              <td>
+                <div class="ui input width100">
+                  <input type="text" placeholder="<number>or<cron shedule>" (click)="popupInterval.show($event, {position: 'right center', on: 'hover'})" [(ngModel)]="ipt.interval" [ngModelOptions]="{standalone: true}">
+                </div>
+                <!-- <small *ngIf="intervalCtl.dirty && !intervalCtl.valid" class="vali-msg">
+                  {{requiredMsg}}
+                </small> -->
+              </td>
+              <td>
+                <div class="ui input width100">
+                  <sm-select [(model)]="ipt.data_retention_period" class="fluid select width100">
+                    <option *ngFor="let opt of retentionOptions">{{opt}}</option>
+                  </sm-select>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </form>
+    </div>
+
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="addModal.hide()">Cancel</sm-button>
+    <a class="ui teal button" *ngIf="inputType=='file'" [class.disabled]="!logFilePathCtl.valid || !fileSourcetypeCtl.valid || !isCompleted" (click)="addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+
+    <a class="ui teal button" *ngIf="inputType=='script'" [class.disabled]="!scriptSourcetypeCtl.valid || !scriptIntervalCtl.valid || currentScriptInput.script==null || !isCompleted" (click)="addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+    
+    <a class="ui teal button" *ngIf="inputType=='unixapp'" [class.disabled]="selectedUnixAppInputsStr?.length<1 || !isCompleted" (click)="addRecord()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Submit</a>
+
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Do you want to delete Input?" class="ui small modal" icon="trash" #delModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field" *ngIf="inputType=='file'">
+        <label>Log File Path</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentFileInput.log_file_path" disabled>
+      </div>
+
+      <div class="field" *ngIf="inputType=='script'">
+        <label>Script Name</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentScriptInput.script_name" disabled>
+      </div>
+
+      <div class="field" *ngIf="inputType=='unixapp'">
+        <label>Script Name</label>
+        <input class="text-readonly" type="text" [(ngModel)]="currentUnixAppInput.script_name" disabled>
+      </div>
+
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="delModal.hide()">Cancel</sm-button>
+    <div class="ui button orange del" (click)="delModal.hide();deleteRecord()">Delete</div>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="{{currentScriptInput.script_name}}" class="ui large modal" icon="code" #showScriptModal>
+  <modal-content>
+    <div class="ui form">
+      <div class="field">
+        <pre>{{currentScriptInput.script_code}}</pre>
+      </div>
+    </div>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="showScriptModal.hide()">Close</sm-button>
+  </modal-actions>
+</sm-modal>
+
+<sm-modal title="Inputs and Apps" class="ui small modal" icon="info" #infoModal>
+  <modal-content>
+    <sm-message class="positive modal-msg">
+      <message-content>
+        <i class="info icon"></i>The App here is different from the App located at the top bar in Splunk Web, the latter one is the working environment for current user, basically you will never need to switch that App in Splunk Host
+      </message-content>
+    </sm-message>
+    <img src="assets/images/inputs-apps.png" class="ui image">
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="infoModal.hide()">Close</sm-button>
+  </modal-actions>
+</sm-modal>
+
+<sm-popup #popupLogFilePath>
+  {{popupLogFilePathStr}}
+</sm-popup>
+<sm-popup #popupSourcetype>
+  {{popupSourcetypeStr}}
+</sm-popup>
+<sm-popup #popupBlacklist>
+  {{popupBlacklistStr}}
+</sm-popup>
+<sm-popup #popupInterval>
+  {{popupIntervalStr}}
+</sm-popup>
+<sm-popup #popupOption>
+  {{popupOptionStr}}
+</sm-popup>

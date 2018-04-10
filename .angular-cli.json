@@ -1,0 +1,68 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "project": {
+    "name": "dotconf-assist"
+  },
+  "apps": [
+    {
+      "root": "src",
+      "outDir": "dist",
+      "assets": [
+        "assets",
+        "favicon.ico"
+      ],
+      "index": "index.html",
+      "main": "main.ts",
+      "polyfills": "polyfills.ts",
+      "test": "test.ts",
+      "tsconfig": "tsconfig.app.json",
+      "testTsconfig": "tsconfig.spec.json",
+      "prefix": "app",
+      "styles": [
+        "vendor/semantic/dist/semantic.min.css",
+        "vendor/OwlCarousel2-2.2.1/dist/assets/owl.carousel.min.css",
+        "vendor/OwlCarousel2-2.2.1/dist/assets/owl.theme.default.min.css",
+        "assets/stylesheets/dashboard-template.scss",
+        "assets/stylesheets/styles.scss"
+      ],
+      "scripts": [
+        "../node_modules/jquery/dist/jquery.min.js",
+        "vendor/OwlCarousel2-2.2.1/dist/owl.carousel.min.js",
+        "vendor/semantic/dist/semantic.min.js"
+      ],
+      "environmentSource": "environments/environment.ts",
+      "environments": {
+        "dev": "environments/environment.ts",
+        "prod": "environments/environment.prod.ts"
+      }
+    }
+  ],
+  "e2e": {
+    "protractor": {
+      "config": "./protractor.conf.js"
+    }
+  },
+  "lint": [
+    {
+      "project": "src/tsconfig.app.json",
+      "exclude": "**/node_modules/**"
+    },
+    {
+      "project": "src/tsconfig.spec.json",
+      "exclude": "**/node_modules/**"
+    },
+    {
+      "project": "e2e/tsconfig.e2e.json",
+      "exclude": "**/node_modules/**"
+    }
+  ],
+  "test": {
+    "karma": {
+      "config": "./karma.conf.js"
+    }
+  },
+  "defaults": {
+    "styleExt": "css",
+    "component": {}
+  }
+}

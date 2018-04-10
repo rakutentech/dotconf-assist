@@ -1,0 +1,120 @@
+<div class="ui fixed top menu">
+  <a href="/" class="icon item pointer home-title">
+    <img src="assets/images/logo.jpg" class="ui avatar image" alt="logo">
+    <h3 class="title-text">{{appName}}</h3>
+  </a>
+
+  <div class="menu">
+    <a [style.visibility]="userName=='guest' ? 'hidden' : 'visible'" (click)="switchMode('prod')" class="env item prod active">PROD</a>
+    <a [style.visibility]="userName=='guest' ? 'hidden' : 'visible'" (click)="switchMode('stg')" class="env stg item">STG</a>
+    <a [style.visibility]="userName=='guest' ? 'hidden' : 'visible'" (click)="switchMode('dev')" class="env dev item">DEV</a>
+  </div>
+
+    <div class="menu right">
+    <div class="ui dropdown item top-dropdown">Links
+      <i class="dropdown icon"></i>
+      <div class="menu">
+        <a class="item" target="_blank" href="{{quickStartLink}}"><i class="linkify icon"></i>Splunk start guide</a>
+        <a class="item" target="_blank" href="{{webToolLink}}"><i class="linkify icon"></i>{{appName}} start guide</a>
+        <a class="item" target="_blank" href="{{jiraLink}}"><i class="linkify icon"></i>Jira request</a>
+        <a class="item" target="_blank" href="{{aboutLink}}"><i class="linkify icon"></i>About</a>
+        <a class="item" target="_blank" href="{{faqLink}}"><i class="linkify icon"></i>FAQ</a>
+      </div>
+    </div>
+
+    <div [style.display]="isLoggedIn ? 'none' : 'block'" id="login-logout-btn" (click)="adminLoginModal.show({blurring: true}); openAdminLoginModal()" class="ui inverted blue button item">Admin login</div>
+
+    <div [style.visibility]="userName=='guest' ? 'hidden' : 'visible'" class="ui dropdown item top-dropdown">{{userName}}<i class="dropdown icon"></i>
+      <div class="menu">
+        <a *ngIf="isLoggedIn" (click)="submitLogout()" class="item"><i class="sign out icon"></i>Logout</a>
+      </div>
+    </div>
+
+  </div>
+</div> <!--header close-->
+
+<div class="pusher sidemenu-main">
+  <div class="ui fluid container">
+    <div class="ui two column grid">
+      <div class="side menu" id="sideMenu">
+        <div align="center" class="profile">
+          <br>
+          <a href=""><img src="assets/images/logo.jpg" class="ui circular image logo"></a>
+          <div class="ui divider"></div>
+        </div>
+        <div class="ui fluid vertical menu" id="verticalMenu">
+          <div class="item sidemenu-unit">
+            <div class="menu" >
+
+              <div *ngFor="let ro of adminRouterOutlets">
+                <!-- <div *ngIf="ro.name=='Forwarders' || ro.name=='Inputs'" class="ui divider"></div> -->
+                <a class="item header sidemenu-item" routerLink={{ro.link}} routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                  <i class="{{ro.icon}} icon side-menu-icon"></i>
+                  <span class="sidemenu-text">{{ro.name}}</span>
+                </a>
+              </div>
+
+              <div *ngFor="let ro of userRouterOutlets; let i = index ">
+                <a class="item header sidemenu-item" routerLink={{ro.link}} routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+                  <i class="{{ro.icon}} icon side-menu-icon"></i>
+                  <span class="sidemenu-text">{{ro.name}}</span>
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sixteen wide column" id="content">
+        <div class="ui raised segment content-seg">
+          <router-outlet></router-outlet>
+        </div>
+
+        <div class="ui inverted vertical footer segment">
+          <div class="ui center aligned container">
+            <div class="ui horizontal inverted small divided list">
+              <span class="footer-text">Copyright © {{year}} Rakuten, Inc. All Rights Reserved.</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<sm-modal title="Admin login" class="ui small modal" icon="user" #adminLoginModal>
+  <modal-content>
+    <sm-message *ngIf="error" class="negative modal-msg">
+      <message-content>
+       <i class="warning icon"></i> {{error}}
+      </message-content>
+    </sm-message>
+
+    <form class="ui form" [formGroup]="form">
+      <div class="field">
+        <div class="ui left icon right labeled input">
+          <i class="user icon"></i>
+          <input type="text" class="text-readonly" [(ngModel)]="user.user_name" formControlName="name">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="ui left icon input">
+          <i class="lock icon"></i>
+          <input type="password" placeholder="Password" [(ngModel)]="user.password" formControlName="password" (keyup.enter)="submitAdminLogin()">
+        </div>
+        <small *ngIf="passwordCtl.dirty && !passwordCtl.valid" class="vali-msg">
+          {{passwordMsg}}
+        </small>
+      </div>
+    </form>
+  </modal-content>
+  <modal-actions>
+    <sm-button (click)="adminLoginModal.hide()">Cancel</sm-button>
+    <a class="ui teal button" [class.disabled]='!form.valid || !isCompleted' (click)="submitAdminLogin()"><div *ngIf="!isCompleted" class="ui active left inline loader tiny btn-loader"></div>Login</a>
+  </modal-actions>
+</sm-modal>
+
+<button class="invisible" id="login-modal-close" (click)="adminLoginModal.hide()">Hide</button>
